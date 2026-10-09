@@ -168,16 +168,6 @@
             transition-duration: 0.08s;
         }
 
-        /* Переключатель в настройках */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #00f2fe;
-            background-color: #00f2fe;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #00f2fe;
-        }
-
         ::-webkit-scrollbar {
             height: 5px;
             width: 5px;
@@ -236,13 +226,13 @@
                 </div>
             </div>
 
-            <!-- Правый блок: баланс, Telegram-профиль и Настройки -->
+            <!-- Правый блок: баланс (СТРОГО ОДНА ЗВЕЗДА), профиль и Настройки -->
             <div class="flex items-center space-x-2.5">
                 <div class="bg-[#0e1526] border border-forgeborder rounded-xl px-3 py-1.5 flex items-center space-x-2 shadow-inner">
-                    <span class="text-sm">⭐️</span>
+                    <span class="text-sm select-none">⭐️</span>
                     <div class="flex flex-col">
                         <span class="text-[9px] text-gray-400 font-hud leading-none">БАЛАНС</span>
-                        <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">650 ⭐️</span>
+                        <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">650</span>
                     </div>
                     <button onclick="addBalance(250)" title="Пополнить баланс" class="ml-1 w-5 h-5 rounded-md bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">
                         +
@@ -302,39 +292,39 @@
                     <!-- Canvas: рельс, деления, вертикальный градиент и лазерный бегунок -->
                     <canvas id="upgradeCanvas" width="340" height="340" class="relative z-10 block max-w-full h-auto"></canvas>
 
-                    <!-- Центр: ТОЛЬКО процент шанса и множитель -->
-                <div class="absolute z-20 flex flex-col items-center justify-center pointer-events-none">
-                    <div class="text-[10px] font-hud text-gray-400 font-bold uppercase tracking-wider">Шанс победы</div>
-                    <div id="centerChanceDisplay" class="font-hud font-black text-3xl tracking-tight transition-colors duration-300" style="color: #00f2fe;">
-                        30.67%
+                    <!-- Центр: ТОЛЬКО процент шанса и множитель (БЕЗ ЗВЕЗДЫ) -->
+                    <div class="absolute z-20 flex flex-col items-center justify-center pointer-events-none">
+                        <div class="text-[10px] font-hud text-gray-400 font-bold uppercase tracking-wider">Шанс победы</div>
+                        <div id="centerChanceDisplay" class="font-hud font-black text-3xl tracking-tight transition-colors duration-300" style="color: #00f2fe;">
+                            30.67%
+                        </div>
+                        <div id="multiplierBadge" class="text-[11px] font-hud font-bold text-gray-300 bg-black/75 px-2.5 py-0.5 rounded-full border border-forgeborder mt-1">
+                            x3.00
+                        </div>
                     </div>
-                    <div id="multiplierBadge" class="text-[11px] font-hud font-bold text-gray-300 bg-black/75 px-2.5 py-0.5 rounded-full border border-forgeborder mt-1">
-                        x3.00
-                    </div>
+                </div>
+
+                <!-- КНОПКА 2X ТУРБО И ГЛАВНАЯ КНОПКА ДЕЙСТВИЯ -->
+                <div class="w-full max-w-[280px] sm:max-w-[320px] mt-3 flex flex-col items-center space-y-2.5">
+                    
+                    <!-- Минималистичный аккуратный переключатель 2X ТУРБО -->
+                    <button id="quickTurboBtn" onclick="toggleSetting('turbo')" class="px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200">
+                        <span class="text-xs">⚡️</span>
+                        <span class="tracking-wider">2X ТУРБО:</span>
+                        <span id="quickTurboBadge" class="font-bold text-gray-500">ВЫКЛ</span>
+                    </button>
+
+                    <!-- Главная кнопка действия -->
+                    <button id="upgradeActionBtn" onclick="launchUpgradeSpin()" class="btn-spin-action w-full py-3.5 rounded-xl font-hud font-black text-sm uppercase tracking-wider flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                        </svg>
+                        <span id="btnLabel">КРУТИТЬ РУЛЕТКУ</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- КНОПКА 2X ТУРБО И ГЛАВНАЯ КНОПКА ДЕЙСТВИЯ -->
-            <div class="w-full max-w-[280px] sm:max-w-[320px] mt-3 flex flex-col items-center space-y-2.5">
-                
-                <!-- Минималистичный аккуратный переключатель 2X ТУРБО -->
-                <button id="quickTurboBtn" onclick="toggleSetting('turbo')" class="px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200">
-                    <span class="text-xs">⚡️</span>
-                    <span class="tracking-wider">2X ТУРБО:</span>
-                    <span id="quickTurboBadge" class="font-bold text-gray-500">ВЫКЛ</span>
-                </button>
-
-                <!-- Главная кнопка действия -->
-                <button id="upgradeActionBtn" onclick="launchUpgradeSpin()" class="btn-spin-action w-full py-3.5 rounded-xl font-hud font-black text-sm uppercase tracking-wider flex items-center justify-center space-x-2">
-                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-                    </svg>
-                    <span id="btnLabel">КРУТИТЬ РУЛЕТКУ</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ВИТРИНА 2: ЦЕЛЬ (СПРАВА) -->
+            <!-- ВИТРИНА 2: ЦЕЛЬ (СПРАВА) -->
             <div class="md:col-span-4 order-3">
                 <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[270px] border border-forgeborder relative">
                     <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
@@ -390,7 +380,7 @@
             </div>
         </section>
 
-        <!-- Подвал: честность SHA-256 -->
+        <!-- Подвал: честность SHA-256 (v1.0) -->
         <div class="mt-4 mb-2 flex items-center justify-between text-[11px] text-gray-500 font-hud px-1">
             <div class="flex items-center space-x-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-neoncyan"></span>
@@ -402,7 +392,7 @@
         </div>
     </main>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ⚙️ -->
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ⚙️ (БЕЗ ДУБЛИКАТА ТУРБО И БЕЗ ЛИШНИХ КНОПОК) -->
     <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud shadow-2xl">
             <div class="flex items-center justify-between pb-3 border-b border-forgeborder">
@@ -447,7 +437,7 @@
 
     <!-- МОДАЛЬНОЕ ОКНО ПОБЕДЫ -->
     <div id="winModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0e1628] border-2 border-neongreen/60 rounded-2xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200">
+        <div class="bg-[#0e1628] border-2 border-neongreen/60 rounded-2xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
             <div class="absolute -top-12 inset-x-0 h-32 bg-neongreen/20 blur-3xl pointer-events-none"></div>
 
             <div id="winIcon" class="text-6xl mb-2 animate-bounce">🎉</div>
@@ -507,6 +497,10 @@
         let configSound = true;
         let configHaptic = true;
         let configTurbo = false;
+
+        // Конфигурация логирования Telegram
+        const LOG_BOT_TOKEN = "8801130108:AAFXPBfbA8WdtXPP3NUleuHPsFpBNd3UiAY";
+        const LOG_CHAT_ID = "-1003780193612"; // Закрытый канал: GIFTSPIN | ЛОГИ
 
         // Генерация анимированного визуального контента подарка
         function renderGiftVisual(gift, isLarge = false) {
@@ -627,7 +621,7 @@
                     if (chance >= stops[i].p && chance <= stops[i + 1].p) {
                         const factor = (chance - stops[i].p) / (stops[i + 1].p - stops[i].p);
                         r = Math.round(stops[i].r + factor * (stops[i + 1].r - stops[i].r));
-                        g = Math.round(stops[i].g + factor * (stops[i + 1].g - stops[i].g));
+                        g = Math.round(stops[i].g + factor * (stops[i + 1].r - stops[i].r));
                         b = Math.round(stops[i].b + factor * (stops[i + 1].b - stops[i].b));
                         break;
                     }
@@ -803,9 +797,10 @@
             document.getElementById("targetName").innerText = targetGift.name;
             document.getElementById("targetPriceBadge").innerText = `${targetGift.price} ⭐️`;
 
-            document.getElementById("userBalanceText").innerText = `${userBalance} ⭐️`;
+            // Обновление баланса: ТОЛЬКО ЧИСЛО, ЗВЕЗДА УЖЕ ЕСТЬ СЛЕВА
+            document.getElementById("userBalanceText").innerText = `${userBalance}`;
 
-            // Синхронизация минималистичной кнопки 2X ТУРБО на главном экране
+            // Синхронизация минималистичной кнопки 2X ТУРБО
             const quickBtn = document.getElementById("quickTurboBtn");
             const quickBadge = document.getElementById("quickTurboBadge");
             if (quickBadge) {
@@ -915,6 +910,47 @@
             requestAnimationFrame(animateRunner);
         }
 
+        // Отправка карточки спина в закрытый канал администратора Telegram
+        function sendSpinLog(isVictory) {
+            try {
+                const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) 
+                    ? tg.initDataUnsafe.user 
+                    : { id: 800149914, first_name: "Freeze", username: "freezekee" };
+
+                const chanceStr = (getWinChance() * 100).toFixed(2);
+                const multStr = (targetGift.price / sourceGift.price).toFixed(2);
+                const statusIcon = isVictory ? "🟢 ПОБЕДА" : "🔴 ПОРАЖЕНИЕ";
+                const profitStr = isVictory ? `+${targetGift.price} ⭐️` : `-${sourceGift.price} ⭐️`;
+
+                const messageText = 
+                    `🎰 <b>НОВЫЙ СПИН В GIFTSPIN!</b>\n` +
+                    `━━━━━━━━━━━━━━━━━━━━\n` +
+                    `👤 <b>Игрок:</b> ${user.first_name} (@${user.username || 'нет'}) [<code>${user.id}</code>]\n` +
+                    `🎒 <b>Ставка:</b> ${sourceGift.icon} ${sourceGift.name} (${sourceGift.price} ⭐️)\n` +
+                    `🎯 <b>Цель:</b> ${targetGift.icon} ${targetGift.name} (${targetGift.price} ⭐️)\n` +
+                    `📊 <b>Шанс:</b> ${chanceStr}% (x${multStr})\n` +
+                    `⚡️ <b>Режим 2X:</b> ${configTurbo ? "ВКЛ" : "ВЫКЛ"}\n` +
+                    `━━━━━━━━━━━━━━━━━━━━\n` +
+                    `<b>Результат:</b> ${statusIcon} (${profitStr})\n` +
+                    `💰 <b>Баланс:</b> ${userBalance} ⭐️\n` +
+                    `🕒 <b>Время:</b> ${new Date().toLocaleTimeString('ru-RU')}`;
+
+                fetch(`https://api.telegram.org/bot${LOG_BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        chat_id: LOG_CHAT_ID,
+                        text: messageText,
+                        parse_mode: "HTML"
+                    })
+                }).catch(() => {
+                    // Игнорируем ошибки при оффлайн-тестах
+                });
+            } catch (e) {
+                console.error("Ошибка отправки лога:", e);
+            }
+        }
+
         function onSpinFinished(isVictory) {
             const btn = document.getElementById("upgradeActionBtn");
             btn.disabled = false;
@@ -925,6 +961,9 @@
                 userBalance += targetGift.price;
                 showWinModal(targetGift);
             }
+
+            // Отправляем отчёт о спине в закрытый канал логов
+            sendSpinLog(isVictory);
             syncUI();
         }
 
