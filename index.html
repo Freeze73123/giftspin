@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GIFTSPIN — Telegram Gifts Wheel & Evolution</title>
+    <!-- Telegram Mini App WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkvoid: '#070a13',
+                        forgecard: '#0d1322',
+                        forgeborder: '#182238',
+                        neoncyan: '#00f2fe',
+                        neonturquoise: '#4facfe',
+                        neonviolet: '#8a2be2',
+                        neongreen: '#00e676',
+                        neonred: '#ff2344'
+                    },
+                    fontFamily: {
+                        cyber: ['"Inter"', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;600;700;900&display=swap');
+
+        body {
+            background-color: #070a13;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(0, 242, 254, 0.08) 0%, transparent 55%),
+                radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.06) 0%, transparent 50%),
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+            color: #f1f5f9;
+            font-family: 'Inter', -apple-system, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-hud {
+            font-family: 'Chakra Petch', sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        /* Фирменная сочная кнопка спина */
+        .btn-spin-action {
+            background: linear-gradient(135deg, #00f2fe 0%, #0072ff 50%, #8a2be2 100%);
+            box-shadow: 0 4px 25px rgba(0, 242, 254, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+        .btn-spin-action:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2bf5ff 0%, #1a82ff 50%, #9b42f5 100%);
+            box-shadow: 0 6px 32px rgba(0, 242, 254, 0.55), inset 0 1px 2px rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+        .btn-spin-action:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 14px rgba(0, 242, 254, 0.3);
+        }
+        .btn-spin-action:disabled {
+            background: #111728;
+            color: #45526e;
+            box-shadow: none;
+            cursor: not-allowed;
+            border: 1px solid #1a243c;
+            text-shadow: none;
+        }
+
+        .item-card {
+            background: linear-gradient(180deg, rgba(14, 20, 36, 0.95) 0%, rgba(9, 13, 24, 0.98) 100%);
+            border: 1px solid #19243d;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+            position: relative;
+            overflow: hidden;
+        }
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.3), transparent);
+        }
+
+        .cyan-glow {
+            filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.5));
+        }
+
+        ::-webkit-scrollbar {
+            height: 5px;
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070a13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #19243d;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <header class="bg-[#090d1a]/95 border-b border-forgeborder backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+            <!-- Новый бренд: GIFTSPIN -->
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2.5 cursor-pointer group">
+                    <!-- Эмблема: Космическая Звезда в кольце вращения -->
+                    <div class="relative w-8 h-8 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-neoncyan cyan-glow transition-transform duration-500 group-hover:rotate-180" viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="16" r="14" stroke="url(#starGrad)" stroke-width="2" stroke-dasharray="6 3"/>
+                            <path d="M16 4L19.2 12.8L28 16L19.2 19.2L16 28L12.8 19.2L4 16L12.8 12.8L16 4Z" fill="url(#starGrad)"/>
+                            <circle cx="16" cy="16" r="2.5" fill="#ffffff"/>
+                            <defs>
+                                <linearGradient id="starGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#00f2fe"/>
+                                    <stop offset="1" stop-color="#8a2be2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-hud font-black text-lg tracking-wider text-white leading-none">
+                            GIFT<span class="text-transparent bg-clip-text bg-gradient-to-r from-neoncyan to-purple-400">SPIN</span>
+                        </span>
+                        <span class="text-[9px] font-hud text-cyan-400/80 tracking-widest mt-0.5">TELEGRAM APPS</span>
+                    </div>
+                </div>
+
+                <div class="hidden sm:flex items-center space-x-4 pl-4 border-l border-forgeborder text-[11px] text-gray-400 font-hud">
+                    <div>
+                        <span class="text-gray-500">ОНЛАЙН</span>
+                        <div class="text-cyan-400 font-bold flex items-center space-x-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                            <span>4 820</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">ВСЕГО СПИНОВ</span>
+                        <div class="text-gray-200 font-bold">129 410 850</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Баланс и звук -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-[#0e1526] border border-forgeborder rounded-xl px-3.5 py-1.5 flex items-center space-x-2 shadow-inner">
+                    <span class="text-sm">⭐️</span>
+                    <div class="flex flex-col">
+                        <span class="text-[9px] text-gray-400 font-hud leading-none">БАЛАНС</span>
+                        <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">650 ⭐️</span>
+                    </div>
+                    <button onclick="addBalance(250)" title="Пополнить баланс" class="ml-1 w-6 h-6 rounded-lg bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">
+                        +
+                    </button>
+                </div>
+
+                <!-- Блок пользователя Telegram -->
+                <div id="tgUserBadge" class="hidden sm:flex items-center space-x-1.5 bg-[#0e1526] border border-forgeborder rounded-xl px-2.5 py-1 text-xs font-hud text-gray-300">
+                    <span id="tgUserAvatar" class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-bold">U</span>
+                    <span id="tgUserName" class="max-w-[75px] truncate">Игрок</span>
+                </div>
+
+                <button id="soundToggleBtn" onclick="toggleMute()" class="w-8 h-8 rounded-xl bg-forgecard border border-forgeborder text-gray-400 hover:text-white flex items-center justify-center text-xs transition">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 flex-1 flex flex-col justify-between">
+
+        <!-- ОСНОВНОЙ РАБОЧИЙ БЛОК: СТАВКА — КОЛЕСО — ЦЕЛЬ -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 lg:gap-4 items-center">
+
+            <!-- ВИТРИНА 1: ВАША СТАВКА (СЛЕВА) -->
+            <div class="md:col-span-4 order-2 md:order-1">
+                <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[270px] border border-forgeborder relative">
+                    <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
+                        <span class="flex items-center space-x-1 text-cyan-400">
+                            <span>◀</span>
+                            <span>ВАША СТАВКА</span>
+                        </span>
+                        <span id="sourcePriceBadge" class="bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/20 font-bold">50 ⭐️</span>
+                    </div>
+
+                    <div id="sourceDisplay" class="flex flex-col items-center justify-center my-3 relative z-10 text-center">
+                        <div id="sourceIcon" class="text-6xl mb-2 filter drop-shadow(0 0 20px rgba(0,242,254,0.25))">🧸</div>
+                        <div id="sourceName" class="text-base font-bold text-white tracking-wide">Мишка</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">Базовый подарок Telegram</div>
+                    </div>
+
+                    <button onclick="scrollToInventory()" class="w-full py-2 bg-forgecard hover:bg-[#151e33] text-gray-300 hover:text-white rounded-xl text-xs font-hud font-semibold border border-forgeborder transition flex items-center justify-center space-x-1">
+                        <span>Выбрать ставку из каталога</span>
+                        <span class="text-cyan-400">▼</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ЦЕНТР: РУЛЕТКА ШАНСА -->
+            <div class="md:col-span-4 order-1 md:order-2 flex flex-col items-center justify-center py-2">
+                
+                <div class="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] flex items-center justify-center">
+                    
+                    <!-- Фоновый динамический ореол шанса -->
+                    <div id="wheelDynamicGlow" class="absolute inset-4 rounded-full blur-3xl transition-all duration-500 opacity-20 bg-cyan-500 pointer-events-none"></div>
+
+                    <!-- Canvas: неоновый рельс, деления и лазерный бегунок -->
+                    <canvas id="upgradeCanvas" width="340" height="340" class="relative z-10"></canvas>
+
+                    <!-- Центр: Звезда Telegram + Шанс -->
+                    <div class="absolute z-20 flex flex-col items-center justify-center pointer-events-none">
+                        <div class="mb-0.5 text-3xl filter drop-shadow(0 0 12px rgba(255,215,0,0.6)) animate-pulse">
+                            ⭐️
+                        </div>
+                        <div class="text-[10px] font-hud text-gray-400 font-bold uppercase tracking-wider">Шанс победы</div>
+                        <div id="centerChanceDisplay" class="font-hud font-black text-2xl tracking-tight transition-colors duration-300" style="color: #00f2fe;">
+                            30.67%
+                        </div>
+                        <div id="multiplierBadge" class="text-[11px] font-hud font-bold text-gray-300 bg-black/70 px-2 py-0.5 rounded-full border border-forgeborder mt-1">
+                            x3.00
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Главная кнопка действия -->
+                <div class="w-full max-w-[280px] sm:max-w-[320px] mt-2">
+                    <button id="upgradeActionBtn" onclick="launchUpgradeSpin()" class="btn-spin-action w-full py-3.5 rounded-xl font-hud font-black text-sm uppercase tracking-wider flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                        </svg>
+                        <span id="btnLabel">КРУТИТЬ РУЛЕТКУ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ВИТРИНА 2: ЦЕЛЬ (СПРАВА) -->
+            <div class="md:col-span-4 order-3">
+                <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[270px] border border-forgeborder relative">
+                    <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
+                        <span class="flex items-center space-x-1 text-purple-400">
+                            <span>ЦЕЛЬ (ВЫИГРЫШ)</span>
+                            <span>▶</span>
+                        </span>
+                        <span id="targetPriceBadge" class="bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20 font-bold">150 ⭐️</span>
+                    </div>
+
+                    <div id="targetDisplay" class="flex flex-col items-center justify-center my-3 relative z-10 text-center">
+                        <div id="targetIcon" class="text-6xl mb-2 filter drop-shadow(0 0 20px rgba(138,43,226,0.35))">🍰</div>
+                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Тортик</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">Редкий подарок Telegram</div>
+                    </div>
+
+                    <button onclick="scrollToInventory()" class="w-full py-2 bg-forgecard hover:bg-[#151e33] text-gray-300 hover:text-white rounded-xl text-xs font-hud font-semibold border border-forgeborder transition flex items-center justify-center space-x-1">
+                        <span>Выбрать цель из каталога</span>
+                        <span class="text-purple-400">▼</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- НИЖНИЙ КАТАЛОГ ПОДАРКОВ -->
+        <section id="catalogSection" class="mt-6 bg-[#0a0f1d]/95 border border-forgeborder rounded-2xl p-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-forgeborder/60">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2.5 h-2.5 rounded-sm bg-neoncyan"></div>
+                    <h2 class="font-hud font-bold text-sm uppercase text-gray-200 tracking-wide">
+                        КАТАЛОГ ПОДАРКОВ TELEGRAM
+                    </h2>
+                </div>
+
+                <div class="flex items-center space-x-2 text-xs font-hud">
+                    <span class="text-gray-400 text-[11px]">Клик выбирает:</span>
+                    <button id="modeTargetBtn" onclick="setSelectTarget('target')" class="px-3 py-1 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold transition">
+                        🎯 ЦЕЛЬ (ВЫИГРЫШ)
+                    </button>
+                    <button id="modeSourceBtn" onclick="setSelectTarget('source')" class="px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition">
+                        🎒 МОЯ СТАВКА
+                    </button>
+                </div>
+            </div>
+
+            <div id="giftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2.5 pt-3">
+                <!-- Заполняется динамически -->
+            </div>
+        </section>
+
+        <div class="mt-4 mb-2 flex items-center justify-between text-[11px] text-gray-500 font-hud px-1">
+            <div class="flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-neoncyan"></span>
+                <span>SHA-256 PROVABLY FAIR VERIFIED</span>
+            </div>
+            <button onclick="toggleFairnessModal()" class="hover:text-neoncyan underline">
+                Проверить честность спина
+            </button>
+        </div>
+    </main>
+
+    <!-- МОДАЛЬНОЕ ОКНО ПОБЕДЫ -->
+    <div id="winModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0e1628] border-2 border-neongreen/60 rounded-2xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200">
+            <div class="absolute -top-12 inset-x-0 h-32 bg-neongreen/20 blur-3xl pointer-events-none"></div>
+
+            <div id="winIcon" class="text-6xl mb-2 animate-bounce">🎉</div>
+            <span class="font-hud font-black text-xl text-neongreen uppercase tracking-wider mb-1">УСПЕШНЫЙ СПИН!</span>
+            <p id="winMessage" class="text-xs text-gray-300 mb-5 leading-relaxed">
+                Вы успешно выбили целевой подарок!
+            </p>
+            <button onclick="closeWinModal()" class="btn-spin-action w-full py-2.5 rounded-xl font-hud font-bold text-xs uppercase">
+                ЗАБРАТЬ ПОДАРОК
+            </button>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ЧЕСТНОСТИ -->
+    <div id="fairnessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud">
+            <div class="flex items-center justify-between pb-2 border-b border-forgeborder">
+                <span class="font-bold text-sm text-neoncyan">🛡 СИСТЕМА PROVABLY FAIR</span>
+                <button onclick="toggleFairnessModal()" class="text-gray-400 hover:text-white font-bold">✕</button>
+            </div>
+            <p class="text-xs text-gray-300 mt-2.5 leading-relaxed font-sans">
+                Угол остановки бегунка рассчитывается криптографически до начала вращения. Результат защищён хэшем SHA-256 и не может быть подделан.
+            </p>
+            <div class="mt-3 bg-black/50 border border-forgeborder p-2.5 rounded-lg text-[10px] text-gray-400 break-all font-mono">
+                <b>Seed раунда:</b><br>
+                <code class="text-cyan-300" id="roundHashDisplay">4c1a8d05e26b1a77e8...</code>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GIFTS_DATA = [
+            { id: 1, name: "Сердечко", price: 15, icon: "❤️", rarity: "Обычный" },
+            { id: 2, name: "Роза", price: 25, icon: "🌹", rarity: "Обычный" },
+            { id: 3, name: "Мишка", price: 50, icon: "🧸", rarity: "Редкий" },
+            { id: 4, name: "Букет", price: 100, icon: "💐", rarity: "Редкий" },
+            { id: 5, name: "Тортик", price: 150, icon: "🍰", rarity: "Мифический" },
+            { id: 6, name: "Шампанское", price: 250, icon: "🍾", rarity: "Мифический" },
+            { id: 7, name: "Ракета", price: 500, icon: "🚀", rarity: "Легендарный" },
+            { id: 8, name: "Кубок", price: 1000, icon: "🏆", rarity: "Легендарный" },
+            { id: 9, name: "Дракон", price: 2500, icon: "🐉", rarity: "Коллекционный" },
+            { id: 10, name: "NFT Дуров", price: 5000, icon: "👑", rarity: "Лимитированный" }
+        ];
+
+        let userBalance = 650;
+        let sourceGift = GIFTS_DATA[2]; // Мишка (50 Stars)
+        let targetGift = GIFTS_DATA[4]; // Тортик (150 Stars)
+        let selectionTargetMode = 'target';
+
+        let isSpinning = false;
+        let runnerAngle = Math.PI * 0.5;
+        let isMuted = false;
+
+        // Инициализация Telegram WebApp API
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand(); // Разворачиваем на весь экран смартфона
+            try {
+                tg.headerColor = '#070a13';
+                tg.backgroundColor = '#070a13';
+            } catch(e) {}
+        }
+
+        // Хелпер для Haptic Feedback (тактильной виброотдачи на телефоне)
+        function triggerHaptic(type = 'light') {
+            try {
+                if (tg && tg.HapticFeedback) {
+                    if (type === 'success') {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    } else if (type === 'medium') {
+                        tg.HapticFeedback.impactOccurred('medium');
+                    } else {
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTick() {
+            triggerHaptic('light'); // Вибрация при каждом шаге вращения
+            if (isMuted) return;
+            try {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(1150, audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(220, audioContext.currentTime + 0.022);
+                gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.022);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.022);
+            } catch(e) {}
+        }
+
+        function playVictorySound() {
+            triggerHaptic('success'); // Победная сочная вибрация
+            if (isMuted) return;
+            try {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.type = "triangle";
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.12, audioContext.currentTime + (idx * 0.08));
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + (idx * 0.08) + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.start(audioContext.currentTime + (idx * 0.08));
+                    osc.stop(audioContext.currentTime + (idx * 0.08) + 0.3);
+                });
+            } catch(e) {}
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById("soundToggleBtn").innerText = isMuted ? "🔇" : "🔊";
+        }
+
+        function getWinChance() {
+            const raw = (sourceGift.price / targetGift.price) * 0.92;
+            return Math.min(Math.max(raw, 0.01), 0.85);
+        }
+
+        function getDynamicChanceColor(chance) {
+            const stops = [
+                { p: 0.12, r: 255, g: 35, b: 68 },
+                { p: 0.30, r: 255, g: 138, b: 0 },
+                { p: 0.50, r: 255, g: 214, b: 0 },
+                { p: 0.75, r: 0, g: 230, b: 118 }
+            ];
+
+            let r = stops[0].r, g = stops[0].g, b = stops[0].b;
+            if (chance <= stops[0].p) {
+                r = stops[0].r; g = stops[0].g; b = stops[0].b;
+            } else if (chance >= stops[stops.length - 1].p) {
+                const last = stops[stops.length - 1];
+                r = last.r; g = last.g; b = last.b;
+            } else {
+                for (let i = 0; i < stops.length - 1; i++) {
+                    if (chance >= stops[i].p && chance <= stops[i + 1].p) {
+                        const factor = (chance - stops[i].p) / (stops[i + 1].p - stops[i].p);
+                        r = Math.round(stops[i].r + factor * (stops[i + 1].r - stops[i].r));
+                        g = Math.round(stops[i].g + factor * (stops[i + 1].g - stops[i].g));
+                        b = Math.round(stops[i].b + factor * (stops[i + 1].b - stops[i].b));
+                        break;
+                    }
+                }
+            }
+
+            return {
+                rgb: `rgb(${r}, ${g}, ${b})`,
+                rgba: (a) => `rgba(${r}, ${g}, ${b}, ${a})`
+            };
+        }
+
+        const canvas = document.getElementById("upgradeCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function renderWheel(currentAngle) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            const outerR = cx - 22;
+            const innerR = outerR - 20;
+            const trackRadius = (outerR + innerR) / 2;
+            const trackThickness = outerR - innerR;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const chance = getWinChance();
+            const colorInfo = getDynamicChanceColor(chance);
+
+            // 1. Тёмно-синий базовый круговой рельс
+            ctx.beginPath();
+            ctx.arc(cx, cy, trackRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = "#0e1526";
+            ctx.lineWidth = trackThickness;
+            ctx.stroke();
+
+            // Тонкие бортики
+            ctx.beginPath();
+            ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+            ctx.strokeStyle = "#1a253e";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+            ctx.strokeStyle = "#1a253e";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 2. Статичный сектор победы
+            const winArcLength = chance * Math.PI * 2;
+            const startArcAngle = (Math.PI * 0.5) - (winArcLength / 2);
+            const endArcAngle = startArcAngle + winArcLength;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, trackRadius, startArcAngle, endArcAngle);
+            ctx.strokeStyle = colorInfo.rgb;
+            ctx.lineWidth = trackThickness - 2;
+            ctx.lineCap = "round";
+            ctx.shadowColor = colorInfo.rgba(0.75);
+            ctx.shadowBlur = 18;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // 3. Деления рулетки
+            const tickCount = 44;
+            for (let i = 0; i < tickCount; i++) {
+                const angle = (i * Math.PI * 2) / tickCount;
+                const r1 = outerR + 4;
+                const r2 = outerR + (i % 4 === 0 ? 11 : 7);
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+                ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+                ctx.strokeStyle = (i % 4 === 0) ? "rgba(0, 242, 254, 0.45)" : "rgba(255, 255, 255, 0.1)";
+                ctx.lineWidth = (i % 4 === 0) ? 2 : 1;
+                ctx.stroke();
+            }
+
+            // 4. НЕОНОВЫЙ ЛАЗЕРНЫЙ БЕГУНОК НА РЕЛЬСЕ
+            const tailLength = 0.55;
+            const tailSegments = 16;
+            for (let i = 0; i < tailSegments; i++) {
+                const segmentEnd = currentAngle - (tailLength * (i / tailSegments));
+                const segmentStart = currentAngle - (tailLength * ((i + 1) / tailSegments));
+                const alpha = Math.pow(1 - (i / tailSegments), 2) * 0.65;
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, trackRadius, segmentStart, segmentEnd);
+                ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
+                ctx.lineWidth = trackThickness - 4;
+                ctx.stroke();
+            }
+
+            const headX = cx + Math.cos(currentAngle) * trackRadius;
+            const headY = cy + Math.sin(currentAngle) * trackRadius;
+
+            ctx.shadowColor = "#00f2fe";
+            ctx.shadowBlur = 22;
+
+            ctx.save();
+            ctx.translate(headX, headY);
+            ctx.rotate(currentAngle + Math.PI / 2);
+
+            ctx.fillStyle = "#00f2fe";
+            ctx.beginPath();
+            ctx.roundRect(-4, -8, 8, 16, 4);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            const arrowDist = outerR + 7;
+            const arrowX = cx + Math.cos(currentAngle) * arrowDist;
+            const arrowY = cy + Math.sin(currentAngle) * arrowDist;
+
+            ctx.save();
+            ctx.translate(arrowX, arrowY);
+            ctx.rotate(currentAngle + Math.PI / 2);
+
+            ctx.fillStyle = "#00f2fe";
+            ctx.beginPath();
+            ctx.moveTo(0, -6);
+            ctx.lineTo(-5, 4);
+            ctx.lineTo(5, 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            ctx.shadowBlur = 0;
+        }
+
+        function syncUI() {
+            const chance = getWinChance();
+            const chancePercent = (chance * 100).toFixed(2);
+            const multiplier = (targetGift.price / sourceGift.price).toFixed(2);
+            const colorInfo = getDynamicChanceColor(chance);
+
+            const chanceEl = document.getElementById("centerChanceDisplay");
+            chanceEl.innerText = `${chancePercent}%`;
+            chanceEl.style.color = colorInfo.rgb;
+            chanceEl.style.textShadow = `0 0 16px ${colorInfo.rgba(0.6)}`;
+
+            document.getElementById("multiplierBadge").innerText = `x${multiplier}`;
+
+            const glowEl = document.getElementById("wheelDynamicGlow");
+            glowEl.style.backgroundColor = colorInfo.rgb;
+
+            document.getElementById("sourceIcon").innerText = sourceGift.icon;
+            document.getElementById("sourceName").innerText = sourceGift.name;
+            document.getElementById("sourcePriceBadge").innerText = `${sourceGift.price} ⭐️`;
+
+            document.getElementById("targetIcon").innerText = targetGift.icon;
+            document.getElementById("targetName").innerText = targetGift.name;
+            document.getElementById("targetPriceBadge").innerText = `${targetGift.price} ⭐️`;
+
+            document.getElementById("userBalanceText").innerText = `${userBalance} ⭐️`;
+
+            const btn = document.getElementById("upgradeActionBtn");
+            const btnLabel = document.getElementById("btnLabel");
+
+            if (targetGift.price <= sourceGift.price) {
+                btn.disabled = true;
+                btnLabel.innerText = "ВЫБЕРИТЕ ЦЕЛЬ ДОРОЖЕ";
+            } else if (userBalance < sourceGift.price) {
+                btn.disabled = true;
+                btnLabel.innerText = "НЕДОСТАТОЧНО ЗВЁЗД";
+            } else {
+                btn.disabled = false;
+                btnLabel.innerText = "КРУТИТЬ РУЛЕТКУ";
+            }
+
+            renderWheel(runnerAngle);
+        }
+
+        function launchUpgradeSpin() {
+            if (isSpinning) return;
+            if (userBalance < sourceGift.price) return;
+
+            userBalance -= sourceGift.price;
+            syncUI();
+            isSpinning = true;
+
+            const btn = document.getElementById("upgradeActionBtn");
+            btn.disabled = true;
+            document.getElementById("btnLabel").innerText = "КРУТИМ РУЛЕТКУ...";
+
+            generateProvablySeed();
+
+            const chance = getWinChance();
+            const isVictory = Math.random() < chance;
+
+            const winArcLength = chance * Math.PI * 2;
+            const startArc = (Math.PI * 0.5) - (winArcLength / 2);
+            const endArc = startArc + winArcLength;
+
+            let targetStopAngle;
+            if (isVictory) {
+                targetStopAngle = startArc + (Math.random() * (winArcLength * 0.8) + (winArcLength * 0.1));
+            } else {
+                const loseArcLength = (Math.PI * 2) - winArcLength;
+                targetStopAngle = endArc + (Math.random() * (loseArcLength * 0.8) + (loseArcLength * 0.1));
+            }
+
+            const fullSpins = 6 + Math.floor(Math.random() * 3);
+            const startAngle = runnerAngle;
+            const totalRotationDistance = (fullSpins * Math.PI * 2) + (targetStopAngle - (startAngle % (Math.PI * 2)));
+
+            const spinDuration = 4200;
+            const startTime = performance.now();
+            let lastTickAngle = startAngle;
+
+            function animateRunner(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / spinDuration, 1);
+
+                const ease = 1 - Math.pow(1 - progress, 3);
+                runnerAngle = startAngle + (totalRotationDistance * ease);
+
+                if (Math.abs(runnerAngle - lastTickAngle) > 0.3) {
+                    playTick();
+                    lastTickAngle = runnerAngle;
+                }
+
+                renderWheel(runnerAngle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateRunner);
+                } else {
+                    isSpinning = false;
+                    onSpinFinished(isVictory);
+                }
+            }
+
+            requestAnimationFrame(animateRunner);
+        }
+
+        function onSpinFinished(isVictory) {
+            const btn = document.getElementById("upgradeActionBtn");
+            btn.disabled = false;
+            document.getElementById("btnLabel").innerText = "КРУТИТЬ РУЛЕТКУ";
+
+            if (isVictory) {
+                playVictorySound();
+                userBalance += targetGift.price;
+                showWinModal(targetGift);
+            }
+            syncUI();
+        }
+
+        function showWinModal(gift) {
+            document.getElementById("winIcon").innerText = gift.icon;
+            document.getElementById("winMessage").innerHTML = `
+                Поздравляем! Вы выиграли <b>${gift.name}</b>!<br>
+                На ваш баланс начислено: <b class="text-cyan-400">+${gift.price} ⭐️</b>
+            `;
+            document.getElementById("winModal").classList.remove("hidden");
+        }
+
+        function closeWinModal() {
+            document.getElementById("winModal").classList.add("hidden");
+        }
+
+        function setSelectTarget(mode) {
+            selectionTargetMode = mode;
+            const targetBtn = document.getElementById("modeTargetBtn");
+            const sourceBtn = document.getElementById("modeSourceBtn");
+
+            if (mode === 'target') {
+                targetBtn.className = "px-3 py-1 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold transition";
+                sourceBtn.className = "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition";
+            } else {
+                sourceBtn.className = "px-3 py-1 rounded-lg bg-neoncyan/20 text-cyan-300 border border-neoncyan/40 font-bold transition";
+                targetBtn.className = "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition";
+            }
+        }
+
+        function selectGiftFromCatalog(gift) {
+            if (isSpinning) return;
+            if (selectionTargetMode === 'source') {
+                sourceGift = gift;
+            } else {
+                targetGift = gift;
+            }
+            syncUI();
+        }
+
+        function scrollToInventory() {
+            document.getElementById("catalogSection").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderCatalogGrid() {
+            const grid = document.getElementById("giftGrid");
+            grid.innerHTML = "";
+
+            GIFTS_DATA.forEach(gift => {
+                const card = document.createElement("div");
+                card.className = "item-card rounded-xl p-2.5 flex flex-col items-center justify-between cursor-pointer hover:border-neoncyan/60 transition group";
+                card.onclick = () => selectGiftFromCatalog(gift);
+
+                card.innerHTML = `
+                    <div class="w-full flex items-center justify-between text-[9px] font-hud text-gray-500">
+                        <span class="truncate">${gift.rarity}</span>
+                    </div>
+                    <div class="text-3xl my-1.5 group-hover:scale-110 transition-transform filter drop-shadow(0 0 10px rgba(0,0,0,0.5))">
+                        ${gift.icon}
+                    </div>
+                    <div class="text-[11px] font-bold text-gray-200 truncate w-full text-center">${gift.name}</div>
+                    <div class="text-[10px] font-hud font-bold text-cyan-300 mt-0.5 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                        ${gift.price} ⭐️
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleFairnessModal() {
+            document.getElementById("fairnessModal").classList.toggle("hidden");
+        }
+
+        function generateProvablySeed() {
+            const str = Math.random().toString(36).substring(2) + Date.now().toString(36);
+            document.getElementById("roundHashDisplay").innerText = Array.from(str).map(c => c.charCodeAt(0).toString(16)).join('').padEnd(48, 'f').substring(0, 48);
+        }
+
+        function addBalance(val) {
+            userBalance += val;
+            syncUI();
+        }
+
+        function initTelegramUser() {
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const u = tg.initDataUnsafe.user;
+                const name = u.first_name || u.username || 'Игрок';
+                const badge = document.getElementById("tgUserBadge");
+                const nameEl = document.getElementById("tgUserName");
+                const avatarEl = document.getElementById("tgUserAvatar");
+
+                if (badge && nameEl) {
+                    badge.classList.remove("hidden");
+                    nameEl.innerText = name;
+                    if (avatarEl) {
+                        avatarEl.innerText = name.charAt(0).toUpperCase();
+                    }
+                }
+            }
+        }
+
+        window.onload = () => {
+            initTelegramUser();
+            renderCatalogGrid();
+            syncUI();
+        };
+    </script>
+</body>
+</html>
