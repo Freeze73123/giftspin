@@ -213,13 +213,13 @@
             <!-- ЦЕНТР: РУЛЕТКА ШАНСА -->
             <div class="md:col-span-4 order-1 md:order-2 flex flex-col items-center justify-center py-2">
                 
-                <div class="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] flex items-center justify-center">
+                <div class="relative w-[300px] h-[300px] sm:w-[340px] sm:h-[340px] flex items-center justify-center">
                     
                     <!-- Фоновый динамический ореол шанса -->
                     <div id="wheelDynamicGlow" class="absolute inset-4 rounded-full blur-3xl transition-all duration-500 opacity-20 bg-cyan-500 pointer-events-none"></div>
 
                     <!-- Canvas: неоновый рельс, деления и лазерный бегунок -->
-                    <canvas id="upgradeCanvas" width="340" height="340" class="relative z-10"></canvas>
+                    <canvas id="upgradeCanvas" width="340" height="340" class="relative z-10 block max-w-full h-auto"></canvas>
 
                     <!-- Центр: Звезда Telegram + Шанс -->
                     <div class="absolute z-20 flex flex-col items-center justify-center pointer-events-none">
@@ -236,8 +236,8 @@
                     </div>
                 </div>
 
-                <!-- Главная кнопка действия -->
-                <div class="w-full max-w-[280px] sm:max-w-[320px] mt-2">
+                <!-- Главная кнопка действия (увеличен отступ, исключено наложение) -->
+                <div class="w-full max-w-[280px] sm:max-w-[320px] mt-6 sm:mt-7">
                     <button id="upgradeActionBtn" onclick="launchUpgradeSpin()" class="btn-spin-action w-full py-3.5 rounded-xl font-hud font-black text-sm uppercase tracking-wider flex items-center justify-center space-x-2">
                         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
@@ -482,7 +482,8 @@
             const cx = w / 2;
             const cy = h / 2;
             
-            const outerR = cx - 22;
+            // Уменьшаем внешний радиус с 22 до 34, чтобы деления и бегунок не вылезали за границы холста
+            const outerR = cx - 34;
             const innerR = outerR - 20;
             const trackRadius = (outerR + innerR) / 2;
             const trackThickness = outerR - innerR;
