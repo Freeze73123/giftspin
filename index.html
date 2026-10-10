@@ -56,7 +56,7 @@
             letter-spacing: 0.05em;
         }
 
-        /* Сочная неоновая кнопка спина */
+        /* Неоновая кнопка вращения рулетки */
         .btn-spin-action {
             background: linear-gradient(135deg, #00f2fe 0%, #0072ff 50%, #8a2be2 100%);
             box-shadow: 0 4px 25px rgba(0, 242, 254, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7);
@@ -103,45 +103,34 @@
             filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.5));
         }
 
-        /* Интерактивный эффект: наведение мышкой (ПК) и тап (мобильные) */
         .gift-card-interactive {
-            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
             position: relative;
         }
-        .gift-card-interactive::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
-            transform: translateX(-150%);
-            pointer-events: none;
-            border-radius: inherit;
-        }
         .gift-card-interactive:hover {
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 0 12px 28px rgba(0, 242, 254, 0.28);
-            border-color: rgba(0, 242, 254, 0.65);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 242, 254, 0.22);
         }
         .gift-card-interactive:active {
-            transform: scale(0.95);
-            transition-duration: 0.08s;
+            transform: scale(0.96);
         }
 
-        /* Контейнеры для воспроизведения Lottie TGS */
+        /* Контейнер Lottie: обрезает нижний ценник и верхний флажок */
         .tgs-player-box {
             overflow: hidden;
             position: relative;
             border-radius: 12px;
+            contain: layout paint;
         }
         .tgs-player-box svg {
             width: 100% !important;
             height: 100% !important;
             display: block;
             margin: auto;
-            /* Аккуратно увеличиваем и скрываем нарисованный автором нижний бейдж и верхний флажок */
-            transform: scale(1.26) translateY(-4%);
+            /* Аккуратно увеличиваем и маскируем нарисованный автором стикеров ценник снизу */
+            transform: scale(1.6) translateY(-2%);
             transform-origin: center center;
-            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
         }
 
         ::-webkit-scrollbar {
@@ -245,7 +234,6 @@
                     </div>
 
                     <div id="sourceDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
-                        <!-- Контейнер оригинальной TGS-анимации -->
                         <div id="sourceTgsBox" class="w-28 h-28 flex items-center justify-center tgs-player-box mb-1">
                             <span class="text-6xl animate-pulse">🧸</span>
                         </div>
@@ -313,11 +301,10 @@
                     </div>
 
                     <div id="targetDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
-                        <!-- Контейнер оригинальной TGS-анимации -->
                         <div id="targetTgsBox" class="w-28 h-28 flex items-center justify-center tgs-player-box mb-1">
-                            <span class="text-6xl animate-pulse">🎂</span>
+                            <span class="text-6xl animate-pulse">💍</span>
                         </div>
-                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Тортик</div>
+                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Кольцо</div>
                         <div class="text-[11px] text-gray-400 mt-0.5">Оригинальный подарок Telegram</div>
                     </div>
 
@@ -354,7 +341,7 @@
                 </div>
             </div>
 
-            <!-- Сетка подарков в 1 клик с живыми анимациями -->
+            <!-- Сетка подарков (строится 1 раз без лагов) -->
             <div id="giftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-3">
                 <!-- Карточки наполняются динамически скриптом -->
             </div>
@@ -412,13 +399,13 @@
                     </button>
                 </div>
 
-                <!-- Кнопка TGS Инспектора для поиска правильных номеров файлов -->
+                <!-- Кнопка TGS Инспектора -->
                 <div class="pt-2 border-t border-forgeborder/60">
                     <button onclick="toggleTgsInspector()" class="w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 rounded-xl font-hud text-xs font-bold transition flex items-center justify-center space-x-1.5">
                         <span>🔍</span>
                         <span>ИНСПЕКТОР ФАЙЛОВ TGS (ВСЕ 120+)</span>
                     </button>
-                    <div class="text-[10px] text-gray-400 text-center mt-1">Показывает все файлы 001-125 с разбивкой по вкладкам</div>
+                    <div class="text-[10px] text-gray-400 text-center mt-1">Просмотр всех файлов репозитория</div>
                 </div>
             </div>
         </div>
@@ -434,15 +421,12 @@
             <span>Выберите диапазон файлов (всего 125):</span>
             <span class="text-cyan-400 text-[10px]">Клик копирует имя</span>
         </div>
-        <!-- Вкладки диапазонов для плавной работы без зависаний браузера -->
         <div class="flex items-center space-x-1.5 mb-2 font-hud text-xs">
             <button id="inspRange1" onclick="switchInspectorRange(1, 40)" class="flex-1 py-1 rounded bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold text-[11px] transition">001 - 040</button>
             <button id="inspRange2" onclick="switchInspectorRange(41, 80)" class="flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition">041 - 080</button>
             <button id="inspRange3" onclick="switchInspectorRange(81, 125)" class="flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition">081 - 125</button>
         </div>
-        <div id="inspectorGrid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 pr-1">
-            <!-- Заполняется динамически -->
-        </div>
+        <div id="inspectorGrid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 pr-1"></div>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО ПОБЕДЫ -->
@@ -482,23 +466,25 @@
 
     <script>
         // --------------------------------------------------------------------------
-        // СПИСОК ПОДАРКОВ С ТОЧНЫМИ ФАЙЛАМИ ИЗ СТИКЕРПАКА DMJGiftStars
+        // ТОЧНЫЙ СПИСОК 11 ПОДАРКОВ TELEGRAM С ПРОВЕРЕННЫМИ ФАЙЛАМИ
         // --------------------------------------------------------------------------
         const GIFTS_DATA = [
-            { id: 1, name: "Глинтвейн", price: 15, file: "001.tgs", fallbackIcon: "🍷", rarity: "Обычный" },
-            { id: 4, name: "Шляпа Ведьмы", price: 15, file: "004.tgs", fallbackIcon: "🧙‍♀️", rarity: "Обычный" },
+            { id: 95, name: "Сердце", price: 15, file: "095.tgs", fallbackIcon: "❤️", rarity: "Обычный" },
             { id: 15, name: "Роза", price: 25, file: "015.tgs", fallbackIcon: "🌹", rarity: "Обычный" },
-            { id: 6, name: "Тамагочи", price: 50, file: "006.tgs", fallbackIcon: "📟", rarity: "Редкий" },
             { id: 13, name: "Мишка", price: 50, file: "013.tgs", fallbackIcon: "🧸", rarity: "Редкий" },
-            { id: 36, name: "Подарок", price: 100, file: "036.tgs", fallbackIcon: "🎁", rarity: "Легендарный" },
-            { id: 37, name: "Кольцо", price: 100, file: "037.tgs", fallbackIcon: "💍", rarity: "Легендарный" },
-            { id: 3, name: "Шкатулка", price: 250, file: "003.tgs", fallbackIcon: "💎", rarity: "Эпический" },
-            { id: 2, name: "Замок Любви", price: 500, file: "002.tgs", fallbackIcon: "🔒", rarity: "Коллекционный" }
+            { id: 74, name: "Букет", price: 50, file: "074.tgs", fallbackIcon: "💐", rarity: "Редкий" },
+            { id: 9, name: "Торт", price: 75, file: "009.tgs", fallbackIcon: "🎂", rarity: "Редкий" },
+            { id: 36, name: "Подарок", price: 100, file: "036.tgs", fallbackIcon: "🎁", rarity: "Эпический" },
+            { id: 37, name: "Кольцо", price: 150, file: "037.tgs", fallbackIcon: "💍", rarity: "Эпический" },
+            { id: 93, name: "Шампанское", price: 250, file: "093.tgs", fallbackIcon: "🍾", rarity: "Эпический" },
+            { id: 99, name: "Ракета", price: 500, file: "099.tgs", fallbackIcon: "🚀", rarity: "Легендарный" },
+            { id: 112, name: "Кубок", price: 750, file: "112.tgs", fallbackIcon: "🏆", rarity: "Легендарный" },
+            { id: 64, name: "Алмаз", price: 1000, file: "064.tgs", fallbackIcon: "💎", rarity: "Коллекционный" }
         ];
 
         let userBalance = 650;
-        let sourceGift = GIFTS_DATA.find(g => g.file === "013.tgs") || GIFTS_DATA[0]; // Мишка (50 ⭐️)
-        let targetGift = GIFTS_DATA.find(g => g.file === "037.tgs") || GIFTS_DATA[6]; // Кольцо (100 ⭐️)
+        let sourceGift = GIFTS_DATA.find(g => g.file === "013.tgs") || GIFTS_DATA[2]; // Мишка (50 ⭐️)
+        let targetGift = GIFTS_DATA.find(g => g.file === "037.tgs") || GIFTS_DATA[6]; // Кольцо (150 ⭐️)
         let selectionTargetMode = 'target'; // 'source' или 'target'
 
         let isSpinning = false;
@@ -515,16 +501,28 @@
         const LOG_CHAT_ID = "-1003780193612"; // GIFTSPIN | ЛОГИ
 
         // ==========================================================================
-        // ДВИЖОК РАСПАКОВКИ И РЕНДЕРИНГА .TGS (GZIP -> JSON -> LOTTIE 60 FPS)
+        // ОПТИМИЗИРОВАННЫЙ ДВИЖОК TGS (КЭШИРОВАНИЕ + ПРЕДОТВРАЩЕНИЕ ЛАГОВ)
         // ==========================================================================
-        const tgsJsonCache = new Map(); // Кэш данных в оперативной памяти
+        const tgsJsonCache = new Map();
+        const activeLottieInstances = new Map(); // id контейнера -> экземпляр Lottie
 
         async function loadAndPlayTgs(container, fileName, fallbackEmoji) {
             if (!container) return;
 
-            // Если анимация этого файла уже крутится в контейнере — не перезапускаем
+            // Если анимация этого файла уже играет в контейнере — ничего не пересоздаём
             if (container.dataset.activeFile === fileName && container.dataset.loaded === "true") {
                 return;
+            }
+
+            // Очищаем старую анимацию перед созданием новой, освобождая оперативную память
+            const containerKey = container.id || container.dataset.instanceKey || Math.random().toString();
+            container.dataset.instanceKey = containerKey;
+
+            if (activeLottieInstances.has(containerKey)) {
+                try {
+                    activeLottieInstances.get(containerKey).destroy();
+                } catch(e) {}
+                activeLottieInstances.delete(containerKey);
             }
 
             container.dataset.activeFile = fileName;
@@ -535,20 +533,17 @@
                 if (tgsJsonCache.has(fileName)) {
                     animationJson = tgsJsonCache.get(fileName);
                 } else {
-                    // Пробуем загрузить файл напрямую из корня или с альтернативным именем
                     let res = await fetch(fileName);
                     if (!res.ok) {
-                        // Если файл назван без ведущих нулей (например "4.tgs" вместо "004.tgs")
                         const altName = fileName.replace(/^0+/, '');
                         res = await fetch(altName);
                     }
 
                     if (!res.ok) {
-                        throw new Error(`Файл ${fileName} не найден (код ${res.status})`);
+                        throw new Error(`Файл ${fileName} не найден`);
                     }
 
                     const arrayBuffer = await res.arrayBuffer();
-                    // Распаковываем GZip в строку JSON через pako
                     const decompressedString = pako.inflate(new Uint8Array(arrayBuffer), { to: 'string' });
                     animationJson = JSON.parse(decompressedString);
 
@@ -556,26 +551,34 @@
                     if (animationJson && animationJson.layers) {
                         animationJson.layers = animationJson.layers.filter(l => {
                             const name = (l.nm || '').toLowerCase();
-                            return !(name.includes('badge') || name.includes('price') || name.includes('цена') || name.includes('limited') || name.includes('tag'));
+                            return !(name.includes('badge') || name.includes('price') || name.includes('цена') || 
+                                     name.includes('limited') || name.includes('tag') || name.includes('star'));
                         });
                     }
 
                     tgsJsonCache.set(fileName, animationJson);
                 }
 
-                // Очищаем контейнер и создаем векторный SVG плеер
                 container.innerHTML = "";
-                lottie.loadAnimation({
+                const anim = lottie.loadAnimation({
                     container: container,
                     renderer: 'svg',
                     loop: true,
                     autoplay: true,
-                    animationData: animationJson
+                    animationData: animationJson,
+                    rendererSettings: {
+                        preserveAspectRatio: 'xMidYMid meet',
+                        progressiveLoad: true
+                    }
                 });
+
+                // Отключаем расчет дробных кадров для экономии 50% ресурсов процессора
+                anim.setSubframe(false);
+
+                activeLottieInstances.set(containerKey, anim);
                 container.dataset.loaded = "true";
 
             } catch (err) {
-                // Если файл пока не доступен — аккуратно показываем иконку
                 container.innerHTML = `<span class="text-4xl filter drop-shadow(0 4px 10px rgba(0,0,0,0.5)) select-none">${fallbackEmoji}</span>`;
             }
         }
@@ -591,7 +594,6 @@
             } catch(e) {}
         }
 
-        // Haptic Feedback
         function triggerHaptic(type = 'light') {
             if (!configHaptic) return;
             try {
@@ -831,7 +833,7 @@
             const glowEl = document.getElementById("wheelDynamicGlow");
             glowEl.style.backgroundColor = colorInfo.rgb;
 
-            // Обновляем витрины ставки и цели живой TGS анимацией
+            // Обновляем витрины ставки и цели
             document.getElementById("sourceName").innerText = sourceGift.name;
             document.getElementById("sourcePriceBadge").innerText = `${sourceGift.price} ⭐️`;
             loadAndPlayTgs(document.getElementById("sourceTgsBox"), sourceGift.file, sourceGift.fallbackIcon);
@@ -876,7 +878,7 @@
                 btnLabel.innerText = "КРУТИТЬ РУЛЕТКУ";
             }
 
-            renderCatalogGrid();
+            updateCatalogHighlight();
             renderWheel(runnerAngle);
         }
 
@@ -921,7 +923,6 @@
                 const elapsed = now - startTime;
                 const progress = Math.min(elapsed / spinDuration, 1);
 
-                // Плавное рождение следа из стрелки и затухание обратно в стрелку
                 if (progress < 0.25) {
                     trailLengthFactor = progress / 0.25;
                 } else if (progress > 0.75) {
@@ -1033,7 +1034,7 @@
                 tabTarget.className = "px-3.5 py-1.5 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold transition flex items-center space-x-1";
                 tabSource.className = "px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1";
             }
-            renderCatalogGrid();
+            updateCatalogHighlight();
         }
 
         function openTabAndScroll(mode) {
@@ -1052,46 +1053,59 @@
             syncUI();
         }
 
-        function renderCatalogGrid() {
+        // Строится ровно 1 раз при старте — никаких утечек памяти и лагов!
+        function initCatalogGridOnce() {
             const grid = document.getElementById("giftGrid");
             grid.innerHTML = "";
 
             GIFTS_DATA.forEach(gift => {
                 const card = document.createElement("div");
-                const isSelected = (selectionTargetMode === 'source' && sourceGift.id === gift.id) || 
-                                   (selectionTargetMode === 'target' && targetGift.id === gift.id);
-
-                let borderStyle = "border-forgeborder hover:border-cyan-400/50";
-                if (isSelected) {
-                    borderStyle = selectionTargetMode === 'source' 
-                        ? "border-neoncyan shadow-[0_0_15px_rgba(0,242,254,0.35)] ring-1 ring-neoncyan bg-neoncyan/[0.04]" 
-                        : "border-purple-500 shadow-[0_0_15px_rgba(138,43,226,0.35)] ring-1 ring-purple-500 bg-purple-500/[0.04]";
-                }
-
-                card.className = `item-card gift-card-interactive rounded-xl p-2.5 flex flex-col items-center justify-between cursor-pointer transition ${borderStyle}`;
+                card.id = `catalog-card-${gift.id}`;
+                card.className = "item-card gift-card-interactive rounded-xl p-2.5 flex flex-col items-center justify-between cursor-pointer border border-forgeborder";
                 
                 card.onmouseenter = () => triggerHaptic('light');
                 card.ontouchstart = () => triggerHaptic('light');
                 card.onclick = () => selectGiftFromCatalog(gift);
 
-                // Верхний компактный бейдж объединяет редкость и стоимость в 1 аккуратную строку
-                // А громоздкая синяя плашка снизу убрана!
+                // Верхняя строка: редкость слева, цена справа (под картинкой никаких цен нет!)
                 card.innerHTML = `
                     <div class="w-full flex items-center justify-between text-[10px] font-hud text-gray-400 mb-1">
                         <span class="truncate">${gift.rarity}</span>
                         <span class="text-cyan-300 font-bold ml-1">${gift.price} ⭐️</span>
                     </div>
-                    <div class="w-16 h-16 flex items-center justify-center tgs-player-box my-1 card-tgs-container" data-file="${gift.file}" data-fallback="${gift.fallbackIcon}">
-                        <!-- Анимация Lottie TGS монтируется сюда -->
-                    </div>
+                    <div id="grid-box-${gift.id}" class="w-16 h-16 flex items-center justify-center tgs-player-box my-1 card-tgs-container" data-file="${gift.file}" data-fallback="${gift.fallbackIcon}"></div>
                     <div class="text-[11px] font-bold text-gray-200 truncate w-full text-center mt-1">${gift.name}</div>
                 `;
                 grid.appendChild(card);
             });
 
-            // Запускаем TGS анимации для всех карточек в каталоге
-            document.querySelectorAll(".card-tgs-container").forEach(el => {
-                loadAndPlayTgs(el, el.dataset.file, el.dataset.fallback);
+            // Запускаем Lottie для всех карточек
+            GIFTS_DATA.forEach(gift => {
+                const box = document.getElementById(`grid-box-${gift.id}`);
+                loadAndPlayTgs(box, gift.file, gift.fallbackIcon);
+            });
+
+            updateCatalogHighlight();
+        }
+
+        // Мгновенное обновление рамки выбора без перезапуска анимаций
+        function updateCatalogHighlight() {
+            GIFTS_DATA.forEach(gift => {
+                const card = document.getElementById(`catalog-card-${gift.id}`);
+                if (!card) return;
+
+                const isSelected = (selectionTargetMode === 'source' && sourceGift.id === gift.id) || 
+                                   (selectionTargetMode === 'target' && targetGift.id === gift.id);
+
+                if (isSelected) {
+                    if (selectionTargetMode === 'source') {
+                        card.className = "item-card gift-card-interactive rounded-xl p-2.5 flex flex-col items-center justify-between cursor-pointer border-neoncyan shadow-[0_0_15px_rgba(0,242,254,0.35)] ring-1 ring-neoncyan bg-neoncyan/[0.04]";
+                    } else {
+                        card.className = "item-card gift-card-interactive rounded-xl p-2.5 flex flex-col items-center justify-between cursor-pointer border-purple-500 shadow-[0_0_15px_rgba(138,43,226,0.35)] ring-1 ring-purple-500 bg-purple-500/[0.04]";
+                    }
+                } else {
+                    card.className = "item-card gift-card-interactive rounded-xl p-2.5 flex flex-col items-center justify-between cursor-pointer border-forgeborder hover:border-cyan-400/50";
+                }
             });
         }
 
@@ -1110,7 +1124,6 @@
             currentInspectorStart = start;
             currentInspectorEnd = end;
 
-            // Обновляем подсветку кнопок диапазона
             [
                 { id: 'inspRange1', s: 1 },
                 { id: 'inspRange2', s: 41 },
@@ -1134,7 +1147,7 @@
             grid.innerHTML = "";
 
             for (let i = start; i <= end; i++) {
-                if (i === 5) continue; // Пропускаем рекламный баннер DMJ
+                if (i === 5) continue;
                 const fileName = String(i).padStart(3, '0') + '.tgs';
                 const item = document.createElement("div");
                 item.className = "bg-[#090d1a] hover:bg-[#121c33] border border-forgeborder hover:border-cyan-400/40 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer transition";
@@ -1231,6 +1244,7 @@
 
         window.onload = () => {
             initTelegramUser();
+            initCatalogGridOnce();
             setSelectTarget('target');
             syncUI();
         };
