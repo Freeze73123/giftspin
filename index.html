@@ -304,7 +304,7 @@
                                 <span class="text-6xl animate-pulse">💍</span>
                             </div>
                         </div>
-                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Кольцо</div>
+                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Кубок</div>
                         <div class="text-[11px] text-gray-400 mt-0.5">Оригинальный подарок Telegram</div>
                     </div>
 
@@ -401,29 +401,35 @@
                 <div class="pt-2 border-t border-forgeborder/60">
                     <button onclick="toggleTgsInspector()" class="w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 rounded-xl font-hud text-xs font-bold transition flex items-center justify-center space-x-1.5">
                         <span>🔍</span>
-                        <span>ИНСПЕКТОР ФАЙЛОВ TGS (ВСЕ 120+)</span>
+                        <span>БЫСТРЫЙ ИНСПЕКТОР ФАЙЛОВ TGS (БЕЗ ЛАГОВ)</span>
                     </button>
-                    <div class="text-[10px] text-gray-400 text-center mt-1">Просмотр всех файлов репозитория</div>
+                    <div class="text-[10px] text-gray-400 text-center mt-1">Постраничный просмотр всех 119 файлов</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ИНСПЕКТОРА TGS ФАЙЛОВ -->
+    <!-- МОДАЛЬНОЕ ОКНО ИНСПЕКТОРА TGS ФАЙЛОВ (ПОСТРАНИЧНОЕ И БЕЗ ЗАВИСАНИЙ) -->
     <div id="inspectorModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col p-4 max-w-lg mx-auto">
         <div class="flex items-center justify-between pb-3 border-b border-forgeborder">
-            <span class="font-hud font-bold text-sm text-cyan-300">🔍 ВСЕ ФАЙЛЫ В ВАШЕМ РЕПОЗИТОРИИ</span>
+            <span class="font-hud font-bold text-sm text-cyan-300">🔍 ИНСПЕКТОР ФАЙЛОВ TGS (119 ФАЙЛОВ)</span>
             <button onclick="toggleTgsInspector()" class="text-gray-400 hover:text-white font-bold text-base px-2">✕</button>
         </div>
+        
         <div class="text-[11px] text-gray-400 my-2 font-hud flex items-center justify-between">
-            <span>Выберите диапазон файлов (всего 125):</span>
+            <span id="inspectorPageLabel">Страница 1 из 10 (файлы 001 - 012):</span>
             <span class="text-cyan-400 text-[10px]">Клик копирует имя</span>
         </div>
-        <div class="flex items-center space-x-1.5 mb-2 font-hud text-xs">
-            <button id="inspRange1" onclick="switchInspectorRange(1, 40)" class="flex-1 py-1 rounded bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold text-[11px] transition">001 - 040</button>
-            <button id="inspRange2" onclick="switchInspectorRange(41, 80)" class="flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition">041 - 080</button>
-            <button id="inspRange3" onclick="switchInspectorRange(81, 125)" class="flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition">081 - 125</button>
+
+        <!-- Кнопки пагинации по страницам -->
+        <div class="flex items-center justify-between mb-2 font-hud text-xs gap-1">
+            <button onclick="changeInspectorPage(-1)" class="px-3 py-1 rounded bg-[#0e1628] hover:bg-cyan-500/20 text-gray-200 border border-forgeborder font-bold">◀ Назад</button>
+            <div id="inspectorPageNumbers" class="flex items-center space-x-1 overflow-x-auto py-1 max-w-[240px]">
+                <!-- Номера страниц -->
+            </div>
+            <button onclick="changeInspectorPage(1)" class="px-3 py-1 rounded bg-[#0e1628] hover:bg-cyan-500/20 text-gray-200 border border-forgeborder font-bold">Вперёд ▶</button>
         </div>
+
         <div id="inspectorGrid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 pr-1"></div>
     </div>
 
@@ -466,25 +472,25 @@
 
     <script>
         // --------------------------------------------------------------------------
-        // ОФИЦИАЛЬНЫЙ СПИСОК 11 ПОДАРКОВ TELEGRAM С РЕАЛЬНЫМИ ЦЕНАМИ В ЗВЁЗДАХ
+        // СПИСОК 11 ПОДАРКОВ TELEGRAM С ОБНОВЛЕННЫМИ НОМЕРАМИ ИЗ НОВОГО ПАКА
         // --------------------------------------------------------------------------
         const GIFTS_DATA = [
-            { id: 95, name: "Сердце", price: 15, file: "095.tgs", fallbackIcon: "❤️", rarity: "Обычный" },
-            { id: 13, name: "Мишка", price: 15, file: "013.tgs", fallbackIcon: "🧸", rarity: "Обычный" },
-            { id: 15, name: "Роза", price: 25, file: "015.tgs", fallbackIcon: "🌹", rarity: "Обычный" },
+            { id: 95, name: "Мишка", price: 15, file: "095.tgs", fallbackIcon: "🧸", rarity: "Обычный" },
+            { id: 13, name: "Пряник", price: 15, file: "013.tgs", fallbackIcon: "🍪", rarity: "Обычный" },
+            { id: 15, name: "Кубок", price: 25, file: "015.tgs", fallbackIcon: "🏆", rarity: "Обычный" },
             { id: 36, name: "Подарок", price: 25, file: "036.tgs", fallbackIcon: "🎁", rarity: "Обычный" },
-            { id: 74, name: "Букет", price: 50, file: "074.tgs", fallbackIcon: "💐", rarity: "Редкий" },
-            { id: 9, name: "Торт", price: 50, file: "009.tgs", fallbackIcon: "🎂", rarity: "Редкий" },
-            { id: 93, name: "Шампанское", price: 50, file: "093.tgs", fallbackIcon: "🍾", rarity: "Редкий" },
-            { id: 99, name: "Ракета", price: 500, file: "099.tgs", fallbackIcon: "🚀", rarity: "Эпический" },
+            { id: 74, name: "Лягушонок", price: 50, file: "074.tgs", fallbackIcon: "🐸", rarity: "Редкий" },
+            { id: 9, name: "Клавиша", price: 50, file: "009.tgs", fallbackIcon: "⌨️", rarity: "Редкий" },
+            { id: 93, name: "Праздник 5", price: 50, file: "093.tgs", fallbackIcon: "🎉", rarity: "Редкий" },
+            { id: 99, name: "Торт", price: 50, file: "099.tgs", fallbackIcon: "🎂", rarity: "Эпический" },
             { id: 37, name: "Кольцо", price: 100, file: "037.tgs", fallbackIcon: "💍", rarity: "Эпический" },
-            { id: 112, name: "Кубок", price: 100, file: "112.tgs", fallbackIcon: "🏆", rarity: "Легендарный" },
+            { id: 112, name: "Шампанское", price: 100, file: "112.tgs", fallbackIcon: "🍾", rarity: "Легендарный" },
             { id: 64, name: "Алмаз", price: 100, file: "064.tgs", fallbackIcon: "💎", rarity: "Коллекционный" }
         ];
 
         let userBalance = 650;
-        let sourceGift = GIFTS_DATA.find(g => g.file === "013.tgs") || GIFTS_DATA[1]; // Мишка (15 ⭐️)
-        let targetGift = GIFTS_DATA.find(g => g.file === "037.tgs") || GIFTS_DATA[8]; // Кольцо (100 ⭐️)
+        let sourceGift = GIFTS_DATA[0]; // Мишка (095.tgs)
+        let targetGift = GIFTS_DATA[7]; // Торт (099.tgs)
         let selectionTargetMode = 'target'; // 'source' или 'target'
 
         let isSpinning = false;
@@ -503,6 +509,7 @@
         const tgsJsonCache = new Map();
         const activeLottieInstances = new Map(); // key -> Lottie instance
 
+        // Безопасное асинхронное получение и декомпрессия TGS
         async function fetchAndParseTgs(fileName) {
             if (tgsJsonCache.has(fileName)) {
                 return tgsJsonCache.get(fileName);
@@ -521,6 +528,7 @@
             return animationJson;
         }
 
+        // Оптимизированный запуск Lottie без зависаний
         async function loadAndPlayTgs(container, fileName, fallbackEmoji, isCatalog = false) {
             if (!container) return;
 
@@ -544,12 +552,12 @@
                 const animationJson = await fetchAndParseTgs(fileName);
                 container.innerHTML = "";
 
-                // В каталоге используем аппаратный Canvas renderer (в 5 раз легче для GPU/CPU)
+                // В каталоге используем canvas с немедленной фиксацией первого кадра
                 const anim = lottie.loadAnimation({
                     container: container,
-                    renderer: isCatalog ? 'canvas' : 'svg',
+                    renderer: 'canvas',
                     loop: !isCatalog,
-                    autoplay: true,
+                    autoplay: !isCatalog,
                     animationData: animationJson,
                     rendererSettings: {
                         preserveAspectRatio: 'xMidYMid meet',
@@ -557,15 +565,12 @@
                     }
                 });
 
-                // Снижаем нагрузку на CPU
                 anim.setSubframe(false);
 
-                // Для каталога: проигрываем первые кадры и ставим на паузу для экономии 90% ресурсов
+                // Для каталога: останавливаем на первом кадре (0% нагрузки на CPU)
                 if (isCatalog) {
                     anim.addEventListener('DOMLoaded', () => {
-                        setTimeout(() => {
-                            try { anim.goToAndStop(15, true); } catch(e) {}
-                        }, 600);
+                        try { anim.goToAndStop(0, true); } catch(e) {}
                     });
                 }
 
@@ -577,10 +582,10 @@
             }
         }
 
-        // Управление фоновой нагрузкой: пауза во время спина
+        // Приостановка фоновых анимаций на время спина
         function pauseCatalogAnimations() {
             activeLottieInstances.forEach((anim, key) => {
-                if (key.startsWith("catalog-")) {
+                if (key.startsWith("catalog-") || key.startsWith("insp-")) {
                     try { anim.pause(); } catch(e) {}
                 }
             });
@@ -589,7 +594,7 @@
         function resumeCatalogAnimations() {
             activeLottieInstances.forEach((anim, key) => {
                 if (key.startsWith("catalog-")) {
-                    try { anim.play(); } catch(e) {}
+                    try { anim.goToAndStop(0, true); } catch(e) {}
                 }
             });
         }
@@ -1068,7 +1073,6 @@
             syncUI();
         }
 
-        // Строится ровно 1 раз с плавной последовательной загрузкой
         function initCatalogGridOnce() {
             const grid = document.getElementById("giftGrid");
             grid.innerHTML = "";
@@ -1082,7 +1086,6 @@
                 card.ontouchstart = () => triggerHaptic('light');
                 card.onclick = () => selectGiftFromCatalog(gift);
 
-                // Верх: редкость и цена. Центр: гармоничные пропорции подарка
                 card.innerHTML = `
                     <div class="w-full flex items-center justify-between text-[10px] font-hud text-gray-400 mb-1">
                         <span class="truncate">${gift.rarity}</span>
@@ -1098,20 +1101,19 @@
                 grid.appendChild(card);
             });
 
-            // Плавная фоновая подгрузка без зависания UI
+            // Плавная фоновая подгрузка без блокировки экрана
             GIFTS_DATA.forEach((gift, idx) => {
                 setTimeout(() => {
                     const box = document.getElementById(`grid-box-${gift.id}`);
                     if (box) {
                         loadAndPlayTgs(box, gift.file, gift.fallbackIcon, true);
                     }
-                }, 80 + idx * 60);
+                }, 100 + idx * 80);
             });
 
             updateCatalogHighlight();
         }
 
-        // Мгновенное обновление рамки выбора без пересоздания DOM
         function updateCatalogHighlight() {
             GIFTS_DATA.forEach(gift => {
                 const card = document.getElementById(`catalog-card-${gift.id}`);
@@ -1132,49 +1134,73 @@
             });
         }
 
+        let currentInspectorPage = 1;
+        const INSPECTOR_PER_PAGE = 12;
+        const TOTAL_INSPECTOR_FILES = 119;
+        const TOTAL_INSPECTOR_PAGES = Math.ceil(TOTAL_INSPECTOR_FILES / INSPECTOR_PER_PAGE);
+
         function toggleTgsInspector() {
             const modal = document.getElementById("inspectorModal");
             const isHidden = modal.classList.toggle("hidden");
             if (!isHidden) {
-                switchInspectorRange(currentInspectorStart, currentInspectorEnd);
+                renderInspectorPage(currentInspectorPage);
+            } else {
+                destroyInspectorAnimations();
             }
         }
 
-        let currentInspectorStart = 1;
-        let currentInspectorEnd = 40;
-
-        function switchInspectorRange(start, end) {
-            currentInspectorStart = start;
-            currentInspectorEnd = end;
-
-            [
-                { id: 'inspRange1', s: 1 },
-                { id: 'inspRange2', s: 41 },
-                { id: 'inspRange3', s: 81 }
-            ].forEach(tab => {
-                const btn = document.getElementById(tab.id);
-                if (btn) {
-                    if (tab.s === start) {
-                        btn.className = "flex-1 py-1 rounded bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold text-[11px] transition";
-                    } else {
-                        btn.className = "flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition";
-                    }
+        function destroyInspectorAnimations() {
+            activeLottieInstances.forEach((anim, key) => {
+                if (key.startsWith("insp-")) {
+                    try { anim.destroy(); } catch(e) {}
+                    activeLottieInstances.delete(key);
                 }
             });
-
-            renderInspectorGrid(start, end);
         }
 
-        function renderInspectorGrid(start, end) {
+        function changeInspectorPage(delta) {
+            const newPage = currentInspectorPage + delta;
+            if (newPage >= 1 && newPage <= TOTAL_INSPECTOR_PAGES) {
+                renderInspectorPage(newPage);
+            }
+        }
+
+        function setInspectorPage(page) {
+            renderInspectorPage(page);
+        }
+
+        function renderInspectorPage(page) {
+            currentInspectorPage = page;
+            destroyInspectorAnimations();
+
+            const startIdx = (page - 1) * INSPECTOR_PER_PAGE + 1;
+            const endIdx = Math.min(startIdx + INSPECTOR_PER_PAGE - 1, TOTAL_INSPECTOR_FILES);
+
+            document.getElementById("inspectorPageLabel").innerText = 
+                `Страница ${page} из ${TOTAL_INSPECTOR_PAGES} (файлы ${String(startIdx).padStart(3, '0')} - ${String(endIdx).padStart(3, '0')}):`;
+
+            // Рендер кнопок страниц
+            const pNums = document.getElementById("inspectorPageNumbers");
+            pNums.innerHTML = "";
+            for (let p = 1; p <= TOTAL_INSPECTOR_PAGES; p++) {
+                const b = document.createElement("button");
+                b.innerText = p;
+                b.className = p === page 
+                    ? "px-2 py-0.5 rounded bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 font-bold text-[10px]"
+                    : "px-2 py-0.5 rounded bg-[#090d1a] text-gray-400 border border-forgeborder hover:text-white text-[10px]";
+                b.onclick = () => setInspectorPage(p);
+                pNums.appendChild(b);
+            }
+
             const grid = document.getElementById("inspectorGrid");
             grid.innerHTML = "";
 
-            for (let i = start; i <= end; i++) {
-                if (i === 5) continue;
+            for (let i = startIdx; i <= endIdx; i++) {
                 const fileName = String(i).padStart(3, '0') + '.tgs';
                 const item = document.createElement("div");
                 item.className = "bg-[#090d1a] hover:bg-[#121c33] border border-forgeborder hover:border-cyan-400/40 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer transition";
                 item.title = `Нажмите, чтобы скопировать ${fileName}`;
+                
                 item.onclick = () => {
                     const temp = document.createElement("input");
                     temp.value = fileName;
@@ -1197,18 +1223,25 @@
 
                 item.innerHTML = `
                     <div class="w-14 h-14 tgs-display-box">
-                        <div class="w-full h-full inspector-tgs-box flex items-center justify-center" data-file="${fileName}"></div>
+                        <div id="insp-box-${i}" class="w-full h-full flex items-center justify-center" data-instance-key="insp-${i}" data-file="${fileName}">
+                            <span class="text-xl opacity-30">⏳</span>
+                        </div>
                     </div>
                     <span class="file-tag text-[10px] font-mono font-bold text-cyan-300 mt-1">${fileName}</span>
                 `;
                 grid.appendChild(item);
             }
 
-            grid.querySelectorAll(".inspector-tgs-box").forEach((el, idx) => {
+            // Плавная последовательная загрузка только 12 картинок текущей страницы
+            for (let i = startIdx; i <= endIdx; i++) {
+                const offset = i - startIdx;
                 setTimeout(() => {
-                    loadAndPlayTgs(el, el.dataset.file, '🎁', true);
-                }, idx * 40);
-            });
+                    const box = document.getElementById(`insp-box-${i}`);
+                    if (box) {
+                        loadAndPlayTgs(box, box.dataset.file, '🎁', true);
+                    }
+                }, 40 + offset * 50);
+            }
         }
 
         function toggleSettingsModal() {
