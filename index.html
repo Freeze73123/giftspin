@@ -326,6 +326,16 @@
                     </div>
                     <button id="cfgHapticBtn" onclick="toggleSetting('haptic')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">ВКЛ</button>
                 </div>
+                <div class="flex items-center justify-between bg-[#090d1a] p-3 rounded-xl border border-forgeborder">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="text-base">✨</span>
+                        <div>
+                            <div class="font-hud font-bold text-gray-200">Анимации в каталоге</div>
+                            <div class="text-[10px] text-gray-400">Выключи, если телефон тормозит</div>
+                        </div>
+                    </div>
+                    <button id="cfgCatalogAnimBtn" onclick="toggleSetting('catalogAnim')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">ВКЛ</button>
+                </div>
             </div>
         </div>
     </div>
@@ -391,6 +401,7 @@
         let configSound = true;
         let configHaptic = true;
         let configTurbo = false;
+        let configCatalogAnim = true;
 
         // Логирование в канал временно выключено: секретный ключ бота нельзя хранить в открытом коде.
         // Вернём логи безопасным способом на шаге про безопасность.
@@ -431,7 +442,7 @@
                 container: stage, renderer: 'canvas', loop: false, autoplay: false, animationData: data,
                 rendererSettings: { preserveAspectRatio: 'xMidYMid meet', clearCanvas: true, dpr: 1 }
             });
-            await new Promise(r => { anim.addEventListener('DOMLoaded', r); setTimeout(r, 1500); });
+            await new Promise(r => { if (anim.isLoaded) r(); else { anim.addEventListener('DOMLoaded', r); setTimeout(r, 1500); } });
             anim.goToAndStop(Math.round(data.ip + (data.op - data.ip) * 0.33), true);
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
             let url = null;
@@ -491,6 +502,80 @@
             st.req++;
             if (st.anim) { try { st.anim.destroy(); } catch (e) {} }
             delete boxState[id];
+        }
+
+        // Живые анимации в каталоге: играют только карточки, которые сейчас видны на экране.
+        // Один общий таймер на ~30 кадров/с вместо десятков отдельных плееров.
+        const tileVisible = {};
+        const tileLive = new Map();
+        let tickerOn = false, lastTick = 0;
+
+        async function startTile(gift) {
+            if (tileLive.has(gift.id)) return;
+            const rec = { anim: null, holder: null, dead: false, frame: 0, total: 1, fr: 60 };
+            tileLive.set(gift.id, rec);
+            const box = document.getElementById(`grid-box-${gift.id}`);
+            try {
+                const data = await fetchTgs(gift.file);
+                if (rec.dead || !box) return;
+                const holder = document.createElement("div");
+                holder.style.cssText = "position:absolute;inset:0";
+                box.parentNode.appendChild(holder);
+                rec.holder = holder;
+                const anim = lottie.loadAnimation({
+                    container: holder, renderer: 'canvas', loop: false, autoplay: false, animationData: data,
+                    rendererSettings: { preserveAspectRatio: 'xMidYMid meet', clearCanvas: true, dpr: Math.min(window.devicePixelRatio || 1, 2) }
+                });
+                rec.anim = anim;
+                rec.total = Math.max(1, data.op - data.ip);
+                rec.fr = data.fr || 60;
+                rec.frame = Math.random() * rec.total;
+                await new Promise(r => { if (anim.isLoaded) r(); else { anim.addEventListener('DOMLoaded', r); setTimeout(r, 1500); } });
+                if (rec.dead) return;
+                anim.goToAndStop(rec.frame, true);
+                box.style.visibility = "hidden";
+                ensureTicker();
+            } catch (e) { stopTile(gift); }
+        }
+
+        function stopTile(gift) {
+            const rec = tileLive.get(gift.id);
+            if (!rec) return;
+            rec.dead = true;
+            if (rec.anim) { try { rec.anim.destroy(); } catch (e) {} }
+            if (rec.holder && rec.holder.parentNode) rec.holder.parentNode.removeChild(rec.holder);
+            const box = document.getElementById(`grid-box-${gift.id}`);
+            if (box) box.style.visibility = "";
+            tileLive.delete(gift.id);
+        }
+
+        function syncTiles() {
+            GIFTS_DATA.forEach(g => {
+                if (configCatalogAnim && tileVisible[g.id] === true) startTile(g); else stopTile(g);
+            });
+        }
+
+        function ensureTicker() {
+            if (tickerOn) return;
+            tickerOn = true;
+            lastTick = performance.now();
+            requestAnimationFrame(tick);
+        }
+
+        function tick(now) {
+            if (!tileLive.size) { tickerOn = false; return; }
+            const dt = now - lastTick;
+            if (dt >= 33) {
+                lastTick = now;
+                if (!isSpinning && !document.hidden) {
+                    tileLive.forEach(rec => {
+                        if (!rec.anim || rec.dead) return;
+                        rec.frame = (rec.frame + Math.min(dt, 100) / 1000 * rec.fr) % rec.total;
+                        try { rec.anim.goToAndStop(rec.frame, true); } catch (e) {}
+                    });
+                }
+            }
+            requestAnimationFrame(tick);
         }
 
         document.addEventListener("visibilitychange", applyPlayState);
@@ -884,6 +969,7 @@
             GIFTS_DATA.forEach(gift => {
                 const card = document.createElement("div");
                 card.id = `catalog-card-${gift.id}`;
+                card.dataset.gid = gift.id;
                 card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border border-forgeborder";
                 card.onmouseenter = () => triggerHaptic('light');
                 card.ontouchstart = () => triggerHaptic('light');
@@ -902,6 +988,17 @@
                 `;
                 grid.appendChild(card);
             });
+
+            if ("IntersectionObserver" in window) {
+                const tio = new IntersectionObserver(entries => {
+                    entries.forEach(e => { tileVisible[+e.target.dataset.gid] = e.isIntersecting; });
+                    syncTiles();
+                }, { threshold: 0.15 });
+                GIFTS_DATA.forEach(g => tio.observe(document.getElementById(`catalog-card-${g.id}`)));
+            } else {
+                GIFTS_DATA.forEach(g => { tileVisible[g.id] = true; });
+                syncTiles();
+            }
 
             // Картинки рисуются по одной в фоне, страница не подвисает
             GIFTS_DATA.forEach(gift => {
@@ -947,6 +1044,12 @@
                 const btn = document.getElementById("cfgHapticBtn");
                 btn.innerText = configHaptic ? "ВКЛ" : "ВЫКЛ";
                 btn.className = configHaptic ? on : off;
+            } else if (type === 'catalogAnim') {
+                configCatalogAnim = !configCatalogAnim;
+                const btn = document.getElementById("cfgCatalogAnimBtn");
+                btn.innerText = configCatalogAnim ? "ВКЛ" : "ВЫКЛ";
+                btn.className = configCatalogAnim ? on : off;
+                syncTiles();
             } else if (type === 'turbo') {
                 configTurbo = !configTurbo;
                 syncUI();
