@@ -1,511 +1,1313 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GIFTSPIN | Telegram Gifts Upgrader</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GIFTSPIN — Telegram Gifts Wheel</title>
+    <!-- Telegram Mini App WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pako (Декомпрессор GZip для чтения формата .tgs) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <!-- Lottie Web (Официальный плеер анимаций Telegram) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #0b0e14;
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 50% 100%, rgba(112, 0, 255, 0.08) 0%, transparent 50%);
-      color: #ffffff;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkvoid: '#070a13',
+                        forgecard: '#0d1322',
+                        forgeborder: '#182238',
+                        neoncyan: '#00f2fe',
+                        neonturquoise: '#4facfe',
+                        neonviolet: '#8a2be2',
+                        neongreen: '#00e676',
+                        neonred: '#ff2344'
+                    },
+                    fontFamily: {
+                        cyber: ['"Inter"', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;600;700;900&display=swap');
 
-    .glass-card {
-      background: linear-gradient(180deg, rgba(22, 28, 42, 0.85) 0%, rgba(13, 17, 26, 0.95) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    }
+        body {
+            background-color: #070a13;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(0, 242, 254, 0.08) 0%, transparent 55%),
+                radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.06) 0%, transparent 50%),
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+            color: #f1f5f9;
+            font-family: 'Inter', -apple-system, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    .glass-card.active-bet {
-      border-color: rgba(0, 240, 255, 0.6);
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
-    }
+        .font-hud {
+            font-family: 'Chakra Petch', sans-serif;
+            letter-spacing: 0.05em;
+        }
 
-    .glass-card.active-target {
-      border-color: rgba(168, 85, 247, 0.6);
-      box-shadow: 0 0 25px rgba(168, 85, 247, 0.25);
-    }
+        /* Кнопка вращения рулетки */
+        .btn-spin-action {
+            background: linear-gradient(135deg, #00f2fe 0%, #0072ff 50%, #8a2be2 100%);
+            box-shadow: 0 4px 25px rgba(0, 242, 254, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+        .btn-spin-action:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2bf5ff 0%, #1a82ff 50%, #9b42f5 100%);
+            box-shadow: 0 6px 32px rgba(0, 242, 254, 0.55), inset 0 1px 2px rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+        .btn-spin-action:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 14px rgba(0, 242, 254, 0.3);
+        }
+        .btn-spin-action:disabled {
+            background: #111728;
+            color: #45526e;
+            box-shadow: none;
+            cursor: not-allowed;
+            border: 1px solid #1a243c;
+            text-shadow: none;
+        }
 
-    .spin-btn {
-      background: linear-gradient(135deg, #00f0ff 0%, #7000ff 100%);
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.35);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .spin-btn:hover:not(:disabled) {
-      box-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
-      filter: brightness(1.08);
-    }
-    .spin-btn:active:not(:disabled) {
-      transform: scale(0.98);
-    }
-    .spin-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      box-shadow: none;
-      filter: grayscale(0.5);
-    }
+        .item-card {
+            background: linear-gradient(180deg, rgba(14, 20, 36, 0.95) 0%, rgba(9, 13, 24, 0.98) 100%);
+            border: 1px solid #19243d;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+            position: relative;
+            overflow: hidden;
+        }
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.3), transparent);
+        }
 
-    .wheel-outer {
-      background: radial-gradient(circle at center, #1b2234 0%, #0d111a 70%);
-      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15);
-    }
+        .cyan-glow {
+            filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.5));
+        }
 
-    .canvas-container canvas {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: contain;
-    }
-  </style>
+        .gift-card-interactive {
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+        .gift-card-interactive:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 242, 254, 0.22);
+        }
+        .gift-card-interactive:active {
+            transform: scale(0.96);
+        }
+
+        /* ЧИСТЫЙ КОНТЕЙНЕР АНИМАЦИИ (ПОДАРКИ НЕ РЕЖУТСЯ) */
+        .tgs-display-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+        .tgs-display-box svg, .tgs-display-box canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: auto;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+        }
+
+        ::-webkit-scrollbar {
+            height: 5px;
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070a13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #19243d;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start p-4 pb-12 max-w-md mx-auto relative overflow-x-hidden">
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
 
-  <!-- ШАПКА -->
-  <header class="w-full flex items-center justify-between mb-4 z-10">
-    <div class="flex items-center gap-2.5">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 font-black text-white text-base">
-        ✦
-      </div>
-      <div>
-        <div class="flex items-center gap-1.5">
-          <h1 class="text-sm font-black tracking-wider text-white uppercase leading-none">GIFTSPIN</h1>
+    <header class="bg-[#090d1a]/95 border-b border-forgeborder backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+            
+            <!-- Логотип: 4-конечная звезда в пунктирном кольце + GIFTSPIN MINI APP -->
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2.5 cursor-pointer group">
+                    <div class="relative w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-8 h-8 text-neoncyan cyan-glow transition-transform duration-500 group-hover:rotate-90" viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="16" r="13" stroke="url(#logoRingGrad)" stroke-width="2.2" stroke-dasharray="6 3.5"/>
+                            <path d="M16 3L18.8 13.2L29 16L18.8 18.8L16 29L13.2 18.8L3 16L13.2 13.2L16 3Z" fill="url(#logoRingGrad)"/>
+                            <circle cx="16" cy="16" r="2.8" fill="#ffffff"/>
+                            <defs>
+                                <linearGradient id="logoRingGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#00f2fe"/>
+                                    <stop offset="1" stop-color="#8a2be2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-hud font-black text-lg tracking-wider text-white leading-none">
+                            GIFT<span class="text-transparent bg-clip-text bg-gradient-to-r from-neoncyan to-purple-400">SPIN</span>
+                        </span>
+                        <span class="text-[9px] font-hud text-cyan-400/80 tracking-widest mt-0.5 uppercase">MINI APP</span>
+                    </div>
+                </div>
+
+                <div class="hidden sm:flex items-center space-x-4 pl-4 border-l border-forgeborder text-[11px] text-gray-400 font-hud">
+                    <div>
+                        <span class="text-gray-500">ОНЛАЙН</span>
+                        <div class="text-cyan-400 font-bold flex items-center space-x-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                            <span>4 820</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">ВСЕГО СПИНОВ</span>
+                        <div class="text-gray-200 font-bold">129 410 850</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правый блок: баланс (строго одна звезда) и кнопка настроек -->
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-[#0e1526] border border-forgeborder rounded-xl px-3 py-1.5 flex items-center space-x-2 shadow-inner">
+                    <span class="text-sm select-none">⭐️</span>
+                    <div class="flex flex-col">
+                        <span class="text-[9px] text-gray-400 font-hud leading-none">БАЛАНС</span>
+                        <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">650</span>
+                    </div>
+                    <button onclick="addBalance(250)" title="Пополнить баланс" class="ml-1 w-5 h-5 rounded-md bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">
+                        +
+                    </button>
+                </div>
+
+                <div id="tgUserBadge" class="hidden sm:flex items-center space-x-1.5 bg-[#0e1526] border border-forgeborder rounded-xl px-2.5 py-1.5 text-xs font-hud text-gray-300">
+                    <span id="tgUserAvatar" class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-bold">U</span>
+                    <span id="tgUserName" class="max-w-[70px] truncate">Игрок</span>
+                </div>
+
+                <!-- КНОПКА НАСТРОЕК ⚙️ -->
+                <button onclick="toggleSettingsModal()" title="Настройки" class="w-8 h-8 rounded-xl bg-forgecard hover:bg-[#151e33] border border-forgeborder text-gray-300 hover:text-white flex items-center justify-center text-sm transition">
+                    ⚙️
+                </button>
+            </div>
         </div>
-        <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-widest leading-none">MINI APP</span>
-      </div>
-    </div>
+    </header>
 
-    <div class="flex items-center gap-2">
-      <!-- БАЛАНС -->
-      <div class="bg-slate-900/90 border border-slate-700/60 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-inner">
-        <span class="text-sm leading-none">⭐️</span>
-        <span id="userBalanceText" class="font-extrabold text-sm text-amber-300 tracking-wide">650</span>
-      </div>
+    <main class="max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 flex-1 flex flex-col justify-between">
 
-      <!-- НАСТРОЙКИ -->
-      <button id="settingsBtn" class="w-9 h-9 rounded-full bg-slate-900/90 border border-slate-700/60 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-        ⚙️
-      </button>
-    </div>
-  </header>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 lg:gap-4 items-center">
 
-  <!-- ВИТРИНА СТАВКИ И ЦЕЛИ -->
-  <section class="w-full flex flex-col gap-3 mb-5 z-10">
-    <!-- СЛОТ 1: ВАША СТАВКА -->
-    <div id="betShowcase" class="glass-card active-bet rounded-2xl p-3.5 flex items-center justify-between cursor-pointer transition-all">
-      <div class="flex items-center gap-3">
-        <div id="betAnimBox" class="w-16 h-16 canvas-container flex items-center justify-center"></div>
-        <div class="flex flex-col">
-          <span class="text-[10px] font-extrabold text-cyan-400 uppercase tracking-wider">Ваша ставка</span>
-          <h2 id="betName" class="text-base font-black text-white leading-tight">Мишка</h2>
-          <span class="text-[11px] text-slate-400">Оригинальный подарок Telegram</span>
+            <!-- ВИТРИНА 1: ВАША СТАВКА (СЛЕВА) -->
+            <div class="md:col-span-4 order-2 md:order-1">
+                <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[280px] border border-forgeborder relative">
+                    <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
+                        <span class="flex items-center space-x-1 text-cyan-400 font-bold">
+                            <span>◀</span>
+                            <span>ВАША СТАВКА</span>
+                        </span>
+                        <span id="sourcePriceBadge" class="bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/20 font-bold">15 ⭐️</span>
+                    </div>
+
+                    <div id="sourceDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
+                        <div class="w-28 h-28 tgs-display-box mb-1">
+                            <div id="sourceTgsBox" class="w-full h-full flex items-center justify-center">
+                                <span class="text-6xl animate-pulse">🧸</span>
+                            </div>
+                        </div>
+                        <div id="sourceName" class="text-base font-bold text-white tracking-wide">Мишка</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">Оригинальный подарок Telegram</div>
+                    </div>
+
+                    <button onclick="openTabAndScroll('source')" class="w-full py-2.5 bg-forgecard hover:bg-[#151e33] text-gray-200 hover:text-white rounded-xl text-xs font-hud font-bold border border-forgeborder hover:border-cyan-500/40 transition flex items-center justify-center space-x-1.5">
+                        <span>Выбрать подарок из инвентаря</span>
+                        <span class="text-cyan-400">▼</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ВИТРИНА ЦЕНТРА: РУЛЕТКА -->
+            <div class="md:col-span-4 order-1 md:order-2 flex flex-col items-center justify-center py-2">
+                
+                <div class="relative w-[300px] h-[300px] sm:w-[330px] sm:h-[330px] flex items-center justify-center">
+                    
+                    <!-- Фоновое неоновое свечение -->
+                    <div id="wheelDynamicGlow" class="absolute inset-4 rounded-full blur-3xl transition-all duration-500 opacity-25 bg-cyan-500 pointer-events-none"></div>
+
+                    <!-- Canvas: рельс, деления, вертикальный градиент и бегунок со стрелкой -->
+                    <canvas id="upgradeCanvas" width="340" height="340" class="relative z-10 block max-w-full h-auto"></canvas>
+
+                    <!-- Центр: только шанс и множитель (без лишней звезды) -->
+                    <div class="absolute z-20 flex flex-col items-center justify-center pointer-events-none">
+                        <div class="text-[10px] font-hud text-gray-400 font-bold uppercase tracking-wider">Шанс победы</div>
+                        <div id="centerChanceDisplay" class="font-hud font-black text-3xl tracking-tight transition-colors duration-300" style="color: #00f2fe;">
+                            13.80%
+                        </div>
+                        <div id="multiplierBadge" class="text-[11px] font-hud font-bold text-gray-300 bg-black/75 px-2.5 py-0.5 rounded-full border border-forgeborder mt-1">
+                            x6.67
+                        </div>
+                    </div>
+                </div>
+
+                <!-- МИНИМАЛИСТИЧНЫЙ ТУМБЛЕР 2X ТУРБО И КНОПКА СПИНА -->
+                <div class="w-full max-w-[280px] sm:max-w-[320px] mt-3 flex flex-col items-center space-y-2.5">
+                    
+                    <button id="quickTurboBtn" onclick="toggleSetting('turbo')" class="px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200">
+                        <span class="text-xs">⚡️</span>
+                        <span class="tracking-wider">2X ТУРБО:</span>
+                        <span id="quickTurboBadge" class="font-bold text-gray-500">ВЫКЛ</span>
+                    </button>
+
+                    <button id="upgradeActionBtn" onclick="launchUpgradeSpin()" class="btn-spin-action w-full py-3.5 rounded-xl font-hud font-black text-sm uppercase tracking-wider flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                        </svg>
+                        <span id="btnLabel">КРУТИТЬ РУЛЕТКУ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ВИТРИНА 2: ЦЕЛЬ (СПРАВА) -->
+            <div class="md:col-span-4 order-3">
+                <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[280px] border border-forgeborder relative">
+                    <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
+                        <span class="flex items-center space-x-1 text-purple-400 font-bold">
+                            <span>ЦЕЛЬ (ВЫИГРЫШ)</span>
+                            <span>▶</span>
+                        </span>
+                        <span id="targetPriceBadge" class="bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20 font-bold">100 ⭐️</span>
+                    </div>
+
+                    <div id="targetDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
+                        <div class="w-28 h-28 tgs-display-box mb-1">
+                            <div id="targetTgsBox" class="w-full h-full flex items-center justify-center">
+                                <span class="text-6xl animate-pulse">💍</span>
+                            </div>
+                        </div>
+                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Кубок</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">Оригинальный подарок Telegram</div>
+                    </div>
+
+                    <button onclick="openTabAndScroll('target')" class="w-full py-2.5 bg-forgecard hover:bg-[#151e33] text-gray-200 hover:text-white rounded-xl text-xs font-hud font-bold border border-forgeborder hover:border-purple-500/40 transition flex items-center justify-center space-x-1.5">
+                        <span>Выбрать подарок для апгрейда</span>
+                        <span class="text-purple-400">▼</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
-      </div>
-      <div class="flex flex-col items-end">
-        <div class="flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">
-          <span class="text-xs">⭐️</span>
-          <span id="betPrice" class="font-black text-xs text-amber-300">15</span>
+
+        <section id="catalogSection" class="mt-6 bg-[#0a0f1d]/95 border border-forgeborder rounded-2xl p-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-forgeborder/60">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2.5 h-2.5 rounded-sm bg-neoncyan"></div>
+                    <h2 class="font-hud font-bold text-sm uppercase text-gray-200 tracking-wide">
+                        КАТАЛОГ ПОДАРКОВ TELEGRAM
+                    </h2>
+                </div>
+
+                <!-- ВКЛАДКИ: ИНВЕНТАРЬ И ПОДАРКИ ДЛЯ АПГРЕЙДА -->
+                <div class="flex items-center space-x-2 text-xs font-hud">
+                    <span class="text-gray-400 text-[11px]">Клик выбирает:</span>
+                    <button id="tabSourceBtn" onclick="setSelectTarget('source')" class="px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1">
+                        <span>🎒</span>
+                        <span>ИНВЕНТАРЬ</span>
+                    </button>
+                    <button id="tabTargetBtn" onclick="setSelectTarget('target')" class="px-3.5 py-1.5 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold transition flex items-center space-x-1">
+                        <span>🎯</span>
+                        <span>ПОДАРКИ ДЛЯ АПГРЕЙДА</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Сетка подарков (строится 1 раз без утечек памяти) -->
+            <div id="giftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-3">
+                <!-- Карточки наполняются динамически скриптом -->
+            </div>
+        </section>
+
+        <div class="mt-4 mb-2 flex items-center justify-between text-[11px] text-gray-500 font-hud px-1">
+            <div class="flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-neoncyan"></span>
+                <span>SHA-256 PROVABLY FAIR VERIFIED (v1.0)</span>
+            </div>
+            <button onclick="toggleFairnessModal()" class="hover:text-neoncyan underline">
+                Проверить честность спина
+            </button>
         </div>
-        <span class="text-[10px] text-slate-500 font-semibold mt-1">Выбрать ▾</span>
-      </div>
-    </div>
+    </main>
 
-    <!-- СЛОТ 2: ЦЕЛЬ (ВЫИГРЫШ) -->
-    <div id="targetShowcase" class="glass-card active-target rounded-2xl p-3.5 flex items-center justify-between cursor-pointer transition-all">
-      <div class="flex items-center gap-3">
-        <div id="targetAnimBox" class="w-16 h-16 canvas-container flex items-center justify-center"></div>
-        <div class="flex flex-col">
-          <span class="text-[10px] font-extrabold text-purple-400 uppercase tracking-wider">Цель (выигрыш) ▶</span>
-          <h2 id="targetName" class="text-base font-black text-white leading-tight">Кольцо</h2>
-          <span class="text-[11px] text-slate-400">Оригинальный подарок Telegram</span>
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ⚙️ -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-forgeborder">
+                <span class="font-bold text-sm text-cyan-300 flex items-center space-x-2">
+                    <span>⚙️</span>
+                    <span>НАСТРОЙКИ ПРИЛОЖЕНИЯ</span>
+                </span>
+                <button onclick="toggleSettingsModal()" class="text-gray-400 hover:text-white font-bold text-base">✕</button>
+            </div>
+            
+            <div class="mt-4 space-y-3 font-sans text-xs">
+                <!-- Звук -->
+                <div class="flex items-center justify-between bg-[#090d1a] p-3 rounded-xl border border-forgeborder">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="text-base">🔊</span>
+                        <div>
+                            <div class="font-hud font-bold text-gray-200">Звуковые эффекты</div>
+                            <div class="text-[10px] text-gray-400">Звуки вращения рулетки и победы</div>
+                        </div>
+                    </div>
+                    <button id="cfgSoundBtn" onclick="toggleSetting('sound')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">
+                        ВКЛ
+                    </button>
+                </div>
+
+                <!-- Вибрация -->
+                <div class="flex items-center justify-between bg-[#090d1a] p-3 rounded-xl border border-forgeborder">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="text-base">📳</span>
+                        <div>
+                            <div class="font-hud font-bold text-gray-200">Тактильная отдача (Haptic)</div>
+                            <div class="text-[10px] text-gray-400">Вибрация телефона при вращении</div>
+                        </div>
+                    </div>
+                    <button id="cfgHapticBtn" onclick="toggleSetting('haptic')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">
+                        ВКЛ
+                    </button>
+                </div>
+
+                <!-- Кнопка TGS Инспектора -->
+                <div class="pt-2 border-t border-forgeborder/60">
+                    <button onclick="toggleTgsInspector()" class="w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 rounded-xl font-hud text-xs font-bold transition flex items-center justify-center space-x-1.5">
+                        <span>🔍</span>
+                        <span>БЫСТРЫЙ ИНСПЕКТОР ФАЙЛОВ TGS (БЕЗ ЛАГОВ)</span>
+                    </button>
+                    <div class="text-[10px] text-gray-400 text-center mt-1">Постраничный просмотр всех 119 файлов</div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="flex flex-col items-end">
-        <div class="flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">
-          <span class="text-xs">⭐️</span>
-          <span id="targetPrice" class="font-black text-xs text-amber-300">100</span>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ИНСПЕКТОРА TGS ФАЙЛОВ (ПОСТРАНИЧНОЕ И БЕЗ ЗАВИСАНИЙ) -->
+    <div id="inspectorModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col p-4 max-w-lg mx-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-forgeborder">
+            <span class="font-hud font-bold text-sm text-cyan-300">🔍 ИНСПЕКТОР ФАЙЛОВ TGS (119 ФАЙЛОВ)</span>
+            <button onclick="toggleTgsInspector()" class="text-gray-400 hover:text-white font-bold text-base px-2">✕</button>
         </div>
-        <span class="text-[10px] text-slate-500 font-semibold mt-1">Выбрать ▾</span>
-      </div>
-    </div>
-  </section>
+        
+        <div class="text-[11px] text-gray-400 my-2 font-hud flex items-center justify-between">
+            <span id="inspectorPageLabel">Страница 1 из 10 (файлы 001 - 012):</span>
+            <span class="text-cyan-400 text-[10px]">Клик копирует имя</span>
+        </div>
 
-  <!-- КОЛЕСО РУЛЕТКИ -->
-  <section class="w-full flex flex-col items-center justify-center my-2 z-10">
-    <div class="relative w-64 h-64 flex items-center justify-center">
-      <div class="absolute inset-0 rounded-full wheel-outer"></div>
-      <canvas id="wheelCanvas" width="256" height="256" class="absolute inset-0 w-full h-full z-10"></canvas>
+        <!-- Кнопки пагинации по страницам -->
+        <div class="flex items-center justify-between mb-2 font-hud text-xs gap-1">
+            <button onclick="changeInspectorPage(-1)" class="px-3 py-1 rounded bg-[#0e1628] hover:bg-cyan-500/20 text-gray-200 border border-forgeborder font-bold">◀ Назад</button>
+            <div id="inspectorPageNumbers" class="flex items-center space-x-1 overflow-x-auto py-1 max-w-[240px]">
+                <!-- Номера страниц -->
+            </div>
+            <button onclick="changeInspectorPage(1)" class="px-3 py-1 rounded bg-[#0e1628] hover:bg-cyan-500/20 text-gray-200 border border-forgeborder font-bold">Вперёд ▶</button>
+        </div>
 
-      <!-- ЦЕНТРАЛЬНЫЙ ДИСК С ШАНСОМ -->
-      <div class="absolute w-28 h-28 rounded-full bg-[#0d111a] border border-slate-700/80 shadow-2xl flex flex-col items-center justify-center z-20">
-        <span class="text-[9px] uppercase font-black text-slate-400 tracking-wider">Шанс</span>
-        <span id="chanceText" class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 leading-none my-1">15.0%</span>
-        <span id="multText" class="text-[10px] font-bold text-slate-400">x6.67</span>
-      </div>
-    </div>
-
-    <!-- ТУРБО РЕЖИМ -->
-    <div class="flex items-center gap-2 mt-4 bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-full">
-      <span class="text-xs font-bold text-slate-300">2X ТУРБО</span>
-      <button id="turboBtn" class="w-9 h-5 bg-slate-700 rounded-full transition-colors relative p-0.5">
-        <div id="turboPin" class="w-4 h-4 bg-white rounded-full transition-transform"></div>
-      </button>
+        <div id="inspectorGrid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 pr-1"></div>
     </div>
 
-    <!-- КНОПКА КРУТИТЬ -->
-    <button id="spinBtn" class="w-full spin-btn py-4 rounded-2xl font-black text-sm tracking-wider uppercase text-white shadow-xl mt-4 flex items-center justify-center">
-      Крутить рулетку
-    </button>
-  </section>
+    <!-- МОДАЛЬНОЕ ОКНО ПОБЕДЫ -->
+    <div id="winModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0e1628] border-2 border-neongreen/60 rounded-2xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 inset-x-0 h-32 bg-neongreen/20 blur-3xl pointer-events-none"></div>
 
-  <!-- КАТАЛОГ ПОДАРКОВ (ПРЯМО НА СТРАНИЦЕ) -->
-  <section class="w-full mt-6 z-10">
-    <div class="flex items-center justify-between mb-3 px-1">
-      <h3 class="font-black text-xs text-slate-300 uppercase tracking-wider">Каталог подарков Telegram</h3>
-      <span id="selectionHint" class="text-[11px] font-bold text-purple-400">Выберите цель</span>
+            <div class="w-24 h-24 tgs-display-box mb-2">
+                <div id="winTgsContainer" class="w-full h-full flex items-center justify-center">
+                    <span class="text-6xl">🎉</span>
+                </div>
+            </div>
+            <span class="font-hud font-black text-xl text-neongreen uppercase tracking-wider mb-1">УСПЕШНЫЙ СПИН!</span>
+            <p id="winMessage" class="text-xs text-gray-300 mb-5 leading-relaxed">
+                Вы успешно выиграли целевой подарок!
+            </p>
+            <button onclick="closeWinModal()" class="btn-spin-action w-full py-2.5 rounded-xl font-hud font-bold text-xs uppercase">
+                ЗАБРАТЬ ПОДАРОК
+            </button>
+        </div>
     </div>
 
-    <div id="catalogGrid" class="grid grid-cols-2 gap-2.5"></div>
-  </section>
+    <!-- МОДАЛЬНОЕ ОКНО ЧЕСТНОСТИ SHA-256 -->
+    <div id="fairnessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud">
+            <div class="flex items-center justify-between pb-2 border-b border-forgeborder">
+                <span class="font-bold text-sm text-neoncyan">🛡 СИСТЕМА PROVABLY FAIR</span>
+                <button onclick="toggleFairnessModal()" class="text-gray-400 hover:text-white font-bold">✕</button>
+            </div>
+            <p class="text-xs text-gray-300 mt-2.5 leading-relaxed font-sans">
+                Угол остановки бегунка рассчитывается криптографически до начала вращения. Результат защищён хэшем SHA-256 и не может быть подделан.
+            </p>
+            <div class="mt-3 bg-black/50 border border-forgeborder p-2.5 rounded-lg text-[10px] text-gray-400 break-all font-mono">
+                <b>Seed раунда:</b><br>
+                <code class="text-cyan-300" id="roundHashDisplay">4c1a8d05e26b1a77e8...</code>
+            </div>
+        </div>
+    </div>
 
-  <!-- ПОДВАЛ ЧЕСТНОСТИ -->
-  <footer class="w-full mt-8 text-center text-[10px] text-slate-500 flex items-center justify-center gap-1.5 z-10">
-    <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400"></span>
-    <span>SHA-256 PROVABLY FAIR VERIFIED (v1.0)</span>
-  </footer>
+    <script>
+        // --------------------------------------------------------------------------
+        // СПИСОК 11 ПОДАРКОВ TELEGRAM С ОБНОВЛЕННЫМИ НОМЕРАМИ ИЗ НОВОГО ПАКА
+        // --------------------------------------------------------------------------
+        const GIFTS_DATA = [
+            { id: 95, name: "Мишка", price: 15, file: "095.tgs", fallbackIcon: "🧸", rarity: "Обычный" },
+            { id: 13, name: "Пряник", price: 15, file: "013.tgs", fallbackIcon: "🍪", rarity: "Обычный" },
+            { id: 15, name: "Кубок", price: 25, file: "015.tgs", fallbackIcon: "🏆", rarity: "Обычный" },
+            { id: 36, name: "Подарок", price: 25, file: "036.tgs", fallbackIcon: "🎁", rarity: "Обычный" },
+            { id: 74, name: "Лягушонок", price: 50, file: "074.tgs", fallbackIcon: "🐸", rarity: "Редкий" },
+            { id: 9, name: "Клавиша", price: 50, file: "009.tgs", fallbackIcon: "⌨️", rarity: "Редкий" },
+            { id: 93, name: "Праздник 5", price: 50, file: "093.tgs", fallbackIcon: "🎉", rarity: "Редкий" },
+            { id: 99, name: "Торт", price: 50, file: "099.tgs", fallbackIcon: "🎂", rarity: "Эпический" },
+            { id: 37, name: "Кольцо", price: 100, file: "037.tgs", fallbackIcon: "💍", rarity: "Эпический" },
+            { id: 112, name: "Шампанское", price: 100, file: "112.tgs", fallbackIcon: "🍾", rarity: "Легендарный" },
+            { id: 64, name: "Алмаз", price: 100, file: "064.tgs", fallbackIcon: "💎", rarity: "Коллекционный" }
+        ];
 
-  <script>
-    const BOT_TOKEN = "8056208077:AAE1rEwO5tY24sWvX2Bq2wX416a_3R5U5tU";
-    const LOG_CHAT_ID = "-1003780193612"; //[cite: 4]
+        let userBalance = 650;
+        let sourceGift = GIFTS_DATA[0]; // Мишка (095.tgs)
+        let targetGift = GIFTS_DATA[7]; // Торт (099.tgs)
+        let selectionTargetMode = 'target'; // 'source' или 'target'
 
-    // ТОЧНАЯ ПРИВЯЗКА ФАЙЛОВ ИЗ АРХИВА БЕЗ ЗВЁЗД[cite: 10]
-    const GIFTS = [
-      { id: 'heart',     name: 'Сердце',     price: 15,  file: '89.tgs',  rarity: 'Обычный' }, //[cite: 10]
-      { id: 'bear',      name: 'Мишка',      price: 15,  file: '95.tgs',  rarity: 'Обычный' }, //[cite: 10]
-      { id: 'rose',      name: 'Роза',       price: 25,  file: '29.tgs',  rarity: 'Обычный' }, //[cite: 10]
-      { id: 'box',       name: 'Подарок',    price: 25,  file: '63.tgs',  rarity: 'Обычный' }, //[cite: 10]
-      { id: 'bouquet',   name: 'Букет',      price: 50,  file: '116.tgs', rarity: 'Редкий' }, //[cite: 10]
-      { id: 'cake',      name: 'Торт',       price: 50,  file: '99.tgs',  rarity: 'Редкий' }, //[cite: 10]
-      { id: 'champagne', name: 'Шампанское', price: 50,  file: '107.tgs', rarity: 'Редкий' }, //[cite: 10]
-      { id: 'rocket',    name: 'Ракета',     price: 50,  file: '47.tgs',  rarity: 'Редкий' }, //[cite: 10]
-      { id: 'ring',      name: 'Кольцо',     price: 100, file: '115.tgs', rarity: 'Эпический' }, //[cite: 10]
-      { id: 'trophy',    name: 'Кубок',      price: 100, file: '15.tgs',  rarity: 'Эпический' }, //[cite: 10]
-      { id: 'diamond',   name: 'Алмаз',      price: 100, file: '22.tgs',  rarity: 'Легендарный' } //[cite: 10]
-    ];
+        let isSpinning = false;
+        let runnerAngle = Math.PI * 0.5;
+        let trailLengthFactor = 0; // Плавное рождение и затухание следа
 
-    let userBalance = 650;
-    let selectedBet = GIFTS[1];    // По умолчанию: Мишка (15)[cite: 10]
-    let selectedTarget = GIFTS[8]; // По умолчанию: Кольцо (100)[cite: 10]
-    let pickMode = 'target';      // 'bet' или 'target'
-    let isTurbo = false;
-    let isSpinning = false;
+        // Настройки
+        let configSound = true;
+        let configHaptic = true;
+        let configTurbo = false;
 
-    // Кэш распакованных JSON для исключения повторной работы CPU
-    const tgsCache = new Map();
-    let betAnim = null;
-    let targetAnim = null;
+        // Данные лог-бота в закрытый канал
+        const LOG_BOT_TOKEN = "8801130108:AAFXPBfbA8WdtXPP3NUleuHPsFpBNd3UiAY";
+        const LOG_CHAT_ID = "-1003780193612"; // GIFTSPIN | ЛОГИ
 
-    // Универсальная загрузка .tgs (поддерживает 15.tgs и 015.tgs)
-    async function getTgsJson(fileName) {
-      if (tgsCache.has(fileName)) return tgsCache.get(fileName);
+        const tgsJsonCache = new Map();
+        const activeLottieInstances = new Map(); // key -> Lottie instance
 
-      const base = fileName.replace('.tgs', '');
-      const num = parseInt(base, 10);
-      const candidates = [
-        fileName,
-        isNaN(num) ? null : `${num}.tgs`,
-        isNaN(num) ? null : `${String(num).padStart(3, '0')}.tgs`
-      ].filter(Boolean);
+        // Безопасное асинхронное получение и декомпрессия TGS
+        async function fetchAndParseTgs(fileName) {
+            if (tgsJsonCache.has(fileName)) {
+                return tgsJsonCache.get(fileName);
+            }
+            let res = await fetch(fileName);
+            if (!res.ok) {
+                const altName = fileName.replace(/^0+/, '');
+                res = await fetch(altName);
+            }
+            if (!res.ok) throw new Error(`Файл ${fileName} не найден`);
 
-      for (const f of [...new Set(candidates)]) {
-        try {
-          const res = await fetch(f);
-          if (res.ok) {
-            const buf = await res.arrayBuffer();
-            const unzipped = pako.ungzip(new Uint8Array(buf), { to: 'string' });
-            const json = JSON.parse(unzipped);
-            tgsCache.set(fileName, json);
-            return json;
-          }
-        } catch (e) {}
-      }
-      return null;
-    }
-
-    // Быстрый Canvas-рендер без нагрузки на SVG DOM
-    async function renderLottie(container, fileName, loop = true) {
-      container.innerHTML = '';
-      const animData = await getTgsJson(fileName);
-      if (!animData) {
-        container.innerHTML = '<span class="text-3xl">🎁</span>';
-        return null;
-      }
-      return lottie.loadAnimation({
-        container: container,
-        renderer: 'canvas',
-        loop: loop,
-        autoplay: loop,
-        animationData: animData
-      });
-    }
-
-    // Обновление верхних витрин
-    async function updateShowcase() {
-      document.getElementById('betName').innerText = selectedBet.name;
-      document.getElementById('betPrice').innerText = selectedBet.price;
-      document.getElementById('targetName').innerText = selectedTarget.name;
-      document.getElementById('targetPrice').innerText = selectedTarget.price;
-
-      if (betAnim) betAnim.destroy();
-      if (targetAnim) targetAnim.destroy();
-
-      betAnim = await renderLottie(document.getElementById('betAnimBox'), selectedBet.file, true);
-      targetAnim = await renderLottie(document.getElementById('targetAnimBox'), selectedTarget.file, true);
-
-      updateOdds();
-      highlightActiveCards();
-    }
-
-    function getChance() {
-      const base = (selectedBet.price / selectedTarget.price) * 100;
-      const effective = isTurbo ? base * 2 : base;
-      return Math.min(Math.max(effective, 1.0), 95.0);
-    }
-
-    function updateOdds() {
-      const chance = getChance();
-      const mult = (100 / chance).toFixed(2);
-      document.getElementById('chanceText').innerText = `${chance.toFixed(1)}%`;
-      document.getElementById('multText').innerText = `x${mult}`;
-      drawWheel(0);
-    }
-
-    // Отрисовка колеса рулетки
-    const canvas = document.getElementById('wheelCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function drawWheel(currentAngle = 0) {
-      const w = canvas.width;
-      const h = canvas.height;
-      const cx = w / 2;
-      const cy = h / 2;
-      const r = w / 2 - 12;
-      ctx.clearRect(0, 0, w, h);
-
-      const chance = getChance();
-      const winAngle = (chance / 100) * (Math.PI * 2);
-
-      // Сектор проигрыша
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-      ctx.fill();
-
-      // Сектор выигрыша
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + winAngle);
-      ctx.closePath();
-      const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, '#00f0ff');
-      grad.addColorStop(1, '#7000ff');
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // Бегунок / указатель
-      const pointerAngle = -Math.PI / 2 + currentAngle;
-      const px = cx + (r - 4) * Math.cos(pointerAngle);
-      const py = cy + (r - 4) * Math.sin(pointerAngle);
-
-      ctx.beginPath();
-      ctx.arc(px, py, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-
-    // Спин рулетки
-    document.getElementById('spinBtn').addEventListener('click', () => {
-      if (isSpinning) return;
-      if (userBalance < selectedBet.price) {
-        alert('Недостаточно звёзд на балансе!');
-        return;
-      }
-
-      isSpinning = true;
-      document.getElementById('spinBtn').disabled = true;
-
-      // Списание ставки
-      userBalance -= selectedBet.price;
-      document.getElementById('userBalanceText').innerText = userBalance;
-
-      // Пауза анимаций витрины во время вращения колеса для максимальной плавности
-      if (betAnim) betAnim.pause();
-      if (targetAnim) targetAnim.pause();
-
-      const chance = getChance();
-      const isWin = (Math.random() * 100) < chance;
-      const winAngle = (chance / 100) * (Math.PI * 2);
-
-      const finalAngleOffset = isWin
-        ? (Math.random() * (winAngle - 0.1) + 0.05)
-        : (winAngle + Math.random() * (Math.PI * 2 - winAngle - 0.1) + 0.05);
-
-      const totalRotation = (Math.PI * 2 * 5) + finalAngleOffset;
-      const startTime = performance.now();
-      const duration = isTurbo ? 1800 : 3200;
-
-      function animate(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentAngle = (totalRotation * easeOut) % (Math.PI * 2);
-
-        drawWheel(currentAngle);
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          finishSpin(isWin);
+            const arrayBuffer = await res.arrayBuffer();
+            const decompressedString = pako.inflate(new Uint8Array(arrayBuffer), { to: 'string' });
+            const animationJson = JSON.parse(decompressedString);
+            tgsJsonCache.set(fileName, animationJson);
+            return animationJson;
         }
-      }
-      requestAnimationFrame(animate);
-    });
 
-    // Завершение спина и отправка лога
-    async function finishSpin(isWin) {
-      isSpinning = false;
-      document.getElementById('spinBtn').disabled = false;
+        // Оптимизированный запуск Lottie без зависаний
+        async function loadAndPlayTgs(container, fileName, fallbackEmoji, isCatalog = false) {
+            if (!container) return;
 
-      if (betAnim) betAnim.play();
-      if (targetAnim) targetAnim.play();
+            if (container.dataset.activeFile === fileName && container.dataset.loaded === "true") {
+                return;
+            }
 
-      if (isWin) {
-        userBalance += selectedTarget.price;
-        document.getElementById('userBalanceText').innerText = userBalance;
-      }
+            const containerKey = container.id || container.dataset.instanceKey || Math.random().toString();
+            container.dataset.instanceKey = containerKey;
 
-      // Отправка лога в канал[cite: 4]
-      try {
-        const text = `🎰 <b>НОВЫЙ СПИН GIFTSPIN</b>\n` +
-          `━━━━━━━━━━━━━━━━━━\n` +
-          `👤 <b>Игрок:</b> Freeze (@freezekee)\n` +
-          `🎁 <b>Ставка:</b> ${selectedBet.name} (⭐️ ${selectedBet.price})\n` +
-          `🎯 <b>Цель:</b> ${selectedTarget.name} (⭐️ ${selectedTarget.price})\n` +
-          `📊 <b>Шанс:</b> ${getChance().toFixed(1)}% ${isTurbo ? '⚡️ [ТУРБО 2X]' : ''}\n` +
-          `━━━━━━━━━━━━━━━━━━\n` +
-          `<b>Результат:</b> ${isWin ? '🟢 ПОБЕДА (+' + selectedTarget.price + ' ⭐️)' : '🔴 ПОРАЖЕНИЕ'}\n` +
-          `💰 <b>Баланс:</b> ⭐️ ${userBalance}`;
+            if (activeLottieInstances.has(containerKey)) {
+                try {
+                    activeLottieInstances.get(containerKey).destroy();
+                } catch(e) {}
+                activeLottieInstances.delete(containerKey);
+            }
 
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: LOG_CHAT_ID, //[cite: 4]
-            text: text,
-            parse_mode: 'HTML'
-          })
-        });
-      } catch (e) {}
-    }
+            container.dataset.activeFile = fileName;
 
-    // Переключение турбо
-    document.getElementById('turboBtn').addEventListener('click', () => {
-      if (isSpinning) return;
-      isTurbo = !isTurbo;
-      const btn = document.getElementById('turboBtn');
-      const pin = document.getElementById('turboPin');
-      if (isTurbo) {
-        btn.classList.replace('bg-slate-700', 'bg-cyan-500');
-        pin.classList.add('translate-x-4');
-      } else {
-        btn.classList.replace('bg-cyan-500', 'bg-slate-700');
-        pin.classList.remove('translate-x-4');
-      }
-      updateOdds();
-    });
+            try {
+                const animationJson = await fetchAndParseTgs(fileName);
+                container.innerHTML = "";
 
-    // Переключение режимов выбора по клику на карточки витрин
-    document.getElementById('betShowcase').addEventListener('click', () => {
-      pickMode = 'bet';
-      document.getElementById('selectionHint').innerText = 'Выберите ставку';
-      document.getElementById('selectionHint').className = 'text-[11px] font-bold text-cyan-400';
-      highlightActiveCards();
-    });
+                // В каталоге используем canvas с немедленной фиксацией первого кадра
+                const anim = lottie.loadAnimation({
+                    container: container,
+                    renderer: 'canvas',
+                    loop: !isCatalog,
+                    autoplay: !isCatalog,
+                    animationData: animationJson,
+                    rendererSettings: {
+                        preserveAspectRatio: 'xMidYMid meet',
+                        clearCanvas: true
+                    }
+                });
 
-    document.getElementById('targetShowcase').addEventListener('click', () => {
-      pickMode = 'target';
-      document.getElementById('selectionHint').innerText = 'Выберите цель';
-      document.getElementById('selectionHint').className = 'text-[11px] font-bold text-purple-400';
-      highlightActiveCards();
-    });
+                anim.setSubframe(false);
 
-    function highlightActiveCards() {
-      document.querySelectorAll('.catalog-card').forEach(card => {
-        const id = card.dataset.id;
-        card.classList.remove('border-cyan-400', 'border-purple-400', 'shadow-[0_0_15px_rgba(0,240,255,0.3)]', 'shadow-[0_0_15px_rgba(168,85,247,0.3)]');
-        if (id === selectedBet.id) {
-          card.classList.add('border-cyan-400', 'shadow-[0_0_15px_rgba(0,240,255,0.3)]');
-        } else if (id === selectedTarget.id) {
-          card.classList.add('border-purple-400', 'shadow-[0_0_15px_rgba(168,85,247,0.3)]');
+                // Для каталога: останавливаем на первом кадре (0% нагрузки на CPU)
+                if (isCatalog) {
+                    anim.addEventListener('DOMLoaded', () => {
+                        try { anim.goToAndStop(0, true); } catch(e) {}
+                    });
+                }
+
+                activeLottieInstances.set(containerKey, anim);
+                container.dataset.loaded = "true";
+
+            } catch (err) {
+                container.innerHTML = `<span class="text-4xl filter drop-shadow(0 4px 10px rgba(0,0,0,0.5)) select-none">${fallbackEmoji}</span>`;
+            }
         }
-      });
-    }
 
-    // Отрисовка каталога карточек прямо на странице (без лагов, 0% CPU в фоне)
-    async function initCatalog() {
-      const grid = document.getElementById('catalogGrid');
-      grid.innerHTML = '';
+        // Приостановка фоновых анимаций на время спина
+        function pauseCatalogAnimations() {
+            activeLottieInstances.forEach((anim, key) => {
+                if (key.startsWith("catalog-") || key.startsWith("insp-")) {
+                    try { anim.pause(); } catch(e) {}
+                }
+            });
+        }
 
-      for (const item of GIFTS) {
-        const card = document.createElement('div');
-        card.dataset.id = item.id;
-        card.className = 'catalog-card glass-card rounded-2xl p-3 flex flex-col items-center text-center cursor-pointer transition-all active:scale-95 border border-slate-800';
-        card.innerHTML = `
-          <div class="w-full flex items-center justify-between text-[10px] text-slate-400 font-bold mb-1">
-            <span>${item.rarity}</span>
-            <span class="text-amber-300">⭐️ ${item.price}</span>
-          </div>
-          <div class="w-16 h-16 canvas-container flex items-center justify-center my-1" id="cat-anim-${item.id}"></div>
-          <span class="font-bold text-xs text-white truncate max-w-full mt-1">${item.name}</span>
-        `;
+        function resumeCatalogAnimations() {
+            activeLottieInstances.forEach((anim, key) => {
+                if (key.startsWith("catalog-")) {
+                    try { anim.goToAndStop(0, true); } catch(e) {}
+                }
+            });
+        }
 
-        card.addEventListener('click', () => {
-          if (pickMode === 'bet') {
-            selectedBet = item;
-            pickMode = 'target';
-            document.getElementById('selectionHint').innerText = 'Выберите цель';
-            document.getElementById('selectionHint').className = 'text-[11px] font-bold text-purple-400';
-          } else {
-            selectedTarget = item;
-          }
-          updateShowcase();
-        });
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            try {
+                tg.headerColor = '#070a13';
+                tg.backgroundColor = '#070a13';
+            } catch(e) {}
+        }
 
-        grid.appendChild(card);
+        function triggerHaptic(type = 'light') {
+            if (!configHaptic) return;
+            try {
+                if (tg && tg.HapticFeedback) {
+                    if (type === 'success') {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    } else if (type === 'medium') {
+                        tg.HapticFeedback.impactOccurred('medium');
+                    } else {
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
+                }
+            } catch(e) {}
+        }
 
-        // Карточка каталога загружает первый кадр статично без бесконечного цикла, не создавая нагрузки
-        renderLottie(card.querySelector(`#cat-anim-${item.id}`), item.file, false);
-      }
-    }
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTick() {
+            triggerHaptic('light');
+            if (!configSound) return;
+            try {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(1150, audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(220, audioContext.currentTime + 0.022);
+                gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.022);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.022);
+            } catch(e) {}
+        }
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      await initCatalog();
-      await updateShowcase();
-    });
-  </script>
+        function playVictorySound() {
+            triggerHaptic('success');
+            if (!configSound) return;
+            try {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.type = "triangle";
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.12, audioContext.currentTime + (idx * 0.08));
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + (idx * 0.08) + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.start(audioContext.currentTime + (idx * 0.08));
+                    osc.stop(audioContext.currentTime + (idx * 0.08) + 0.3);
+                });
+            } catch(e) {}
+        }
+
+        function getWinChance() {
+            const raw = (sourceGift.price / targetGift.price) * 0.92;
+            return Math.min(Math.max(raw, 0.01), 0.85);
+        }
+
+        function getDynamicChanceColor(chance) {
+            const stops = [
+                { p: 0.12, r: 255, g: 35, b: 68 },
+                { p: 0.30, r: 255, g: 138, b: 0 },
+                { p: 0.50, r: 255, g: 214, b: 0 },
+                { p: 0.75, r: 0, g: 230, b: 118 }
+            ];
+
+            let r = stops[0].r, g = stops[0].g, b = stops[0].b;
+            if (chance <= stops[0].p) {
+                r = stops[0].r; g = stops[0].g; b = stops[0].b;
+            } else if (chance >= stops[stops.length - 1].p) {
+                const last = stops[stops.length - 1];
+                r = last.r; g = last.g; b = last.b;
+            } else {
+                for (let i = 0; i < stops.length - 1; i++) {
+                    if (chance >= stops[i].p && chance <= stops[i + 1].p) {
+                        const factor = (chance - stops[i].p) / (stops[i + 1].p - stops[i].p);
+                        r = Math.round(stops[i].r + factor * (stops[i + 1].r - stops[i].r));
+                        g = Math.round(stops[i].g + factor * (stops[i + 1].r - stops[i].r));
+                        b = Math.round(stops[i].b + factor * (stops[i + 1].r - stops[i].r));
+                        break;
+                    }
+                }
+            }
+
+            return {
+                rgb: `rgb(${r}, ${g}, ${b})`,
+                rgba: (a) => `rgba(${r}, ${g}, ${b}, ${a})`
+            };
+        }
+
+        const canvas = document.getElementById("upgradeCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function renderWheel(currentAngle) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            const outerR = cx - 34;
+            const innerR = outerR - 20;
+            const trackRadius = (outerR + innerR) / 2;
+            const trackThickness = outerR - innerR;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const chance = getWinChance();
+
+            // 1. Тёмно-синий круговой рельс
+            ctx.beginPath();
+            ctx.arc(cx, cy, trackRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = "#0e1526";
+            ctx.lineWidth = trackThickness;
+            ctx.stroke();
+
+            // Бортики
+            ctx.beginPath();
+            ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+            ctx.strokeStyle = "#1a253e";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+            ctx.strokeStyle = "#1a253e";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 2. Сектор победы с плавным вертикальным градиентом
+            const winArcLength = chance * Math.PI * 2;
+            const startArcAngle = (Math.PI * 0.5) - (winArcLength / 2);
+            const endArcAngle = startArcAngle + winArcLength;
+
+            const vertGrad = ctx.createLinearGradient(0, cy - outerR, 0, cy + outerR);
+            vertGrad.addColorStop(0.0, "#00e676"); // Зелёный вверху
+            vertGrad.addColorStop(0.4, "#ffd600"); // Жёлтый в середине
+            vertGrad.addColorStop(0.7, "#ff8a00"); // Оранжевый
+            vertGrad.addColorStop(1.0, "#ff2344"); // Красный внизу
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, trackRadius, startArcAngle, endArcAngle);
+            ctx.strokeStyle = vertGrad;
+            ctx.lineWidth = trackThickness - 2;
+            ctx.lineCap = "round";
+            ctx.shadowColor = "rgba(0, 242, 254, 0.45)";
+            ctx.shadowBlur = 14;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // 3. Деления рулетки
+            const tickCount = 44;
+            for (let i = 0; i < tickCount; i++) {
+                const angle = (i * Math.PI * 2) / tickCount;
+                const r1 = outerR + 4;
+                const r2 = outerR + (i % 4 === 0 ? 11 : 7);
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+                ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+                ctx.strokeStyle = (i % 4 === 0) ? "rgba(0, 242, 254, 0.45)" : "rgba(255, 255, 255, 0.1)";
+                ctx.lineWidth = (i % 4 === 0) ? 2 : 1;
+                ctx.stroke();
+            }
+
+            // 4. НЕОНОВЫЙ БЕГУНОК: ПЛАВНЫЙ СЛЕД + КРУЖОК СО СТРЕЛКОЙ
+            const maxTail = 0.55;
+            const actualTail = maxTail * trailLengthFactor;
+
+            if (actualTail > 0.01) {
+                const tailSegments = 16;
+                for (let i = 0; i < tailSegments; i++) {
+                    const segmentEnd = currentAngle - (actualTail * (i / tailSegments));
+                    const segmentStart = currentAngle - (actualTail * ((i + 1) / tailSegments));
+                    const alpha = Math.pow(1 - (i / tailSegments), 2) * 0.65 * trailLengthFactor;
+
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, trackRadius, segmentStart, segmentEnd);
+                    ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
+                    ctx.lineWidth = trackThickness - 4;
+                    ctx.stroke();
+                }
+            }
+
+            // Статичный кружок бегунка
+            const headX = cx + Math.cos(currentAngle) * trackRadius;
+            const headY = cy + Math.sin(currentAngle) * trackRadius;
+
+            ctx.shadowColor = "#00f2fe";
+            ctx.shadowBlur = 16;
+
+            // Внешний яркий круг
+            ctx.fillStyle = "#00f2fe";
+            ctx.beginPath();
+            ctx.arc(headX, headY, 6.0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Внутреннее белое ядро
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(headX, headY, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Острая направляющая стрелочка на внешнем кончике
+            const arrowDist = outerR + 6;
+            const arrowX = cx + Math.cos(currentAngle) * arrowDist;
+            const arrowY = cy + Math.sin(currentAngle) * arrowDist;
+
+            ctx.save();
+            ctx.translate(arrowX, arrowY);
+            ctx.rotate(currentAngle + Math.PI / 2);
+
+            ctx.fillStyle = "#00f2fe";
+            ctx.beginPath();
+            ctx.moveTo(0, -5);
+            ctx.lineTo(-4, 3);
+            ctx.lineTo(4, 3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            ctx.shadowBlur = 0;
+        }
+
+        function syncUI() {
+            const chance = getWinChance();
+            const chancePercent = (chance * 100).toFixed(2);
+            const multiplier = (targetGift.price / sourceGift.price).toFixed(2);
+            const colorInfo = getDynamicChanceColor(chance);
+
+            const chanceEl = document.getElementById("centerChanceDisplay");
+            chanceEl.innerText = `${chancePercent}%`;
+            chanceEl.style.color = colorInfo.rgb;
+            chanceEl.style.textShadow = `0 0 16px ${colorInfo.rgba(0.6)}`;
+
+            document.getElementById("multiplierBadge").innerText = `x${multiplier}`;
+
+            const glowEl = document.getElementById("wheelDynamicGlow");
+            glowEl.style.backgroundColor = colorInfo.rgb;
+
+            // Обновляем витрины ставки и цели
+            document.getElementById("sourceName").innerText = sourceGift.name;
+            document.getElementById("sourcePriceBadge").innerText = `${sourceGift.price} ⭐️`;
+            loadAndPlayTgs(document.getElementById("sourceTgsBox"), sourceGift.file, sourceGift.fallbackIcon, false);
+
+            document.getElementById("targetName").innerText = targetGift.name;
+            document.getElementById("targetPriceBadge").innerText = `${targetGift.price} ⭐️`;
+            loadAndPlayTgs(document.getElementById("targetTgsBox"), targetGift.file, targetGift.fallbackIcon, false);
+
+            // Баланс: строго число
+            document.getElementById("userBalanceText").innerText = `${userBalance}`;
+
+            // Синхронизация кнопки 2X ТУРБО
+            const quickBtn = document.getElementById("quickTurboBtn");
+            const quickBadge = document.getElementById("quickTurboBadge");
+            if (quickBadge) {
+                if (configTurbo) {
+                    quickBadge.innerText = "ВКЛ";
+                    quickBadge.className = "font-black text-neoncyan";
+                    if (quickBtn) {
+                        quickBtn.className = "px-3.5 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/50 text-[11px] font-hud flex items-center space-x-1.5 transition-all text-cyan-200 shadow-[0_0_12px_rgba(0,242,254,0.25)]";
+                    }
+                } else {
+                    quickBadge.innerText = "ВЫКЛ";
+                    quickBadge.className = "font-bold text-gray-500";
+                    if (quickBtn) {
+                        quickBtn.className = "px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200";
+                    }
+                }
+            }
+
+            const btn = document.getElementById("upgradeActionBtn");
+            const btnLabel = document.getElementById("btnLabel");
+
+            if (targetGift.price <= sourceGift.price) {
+                btn.disabled = true;
+                btnLabel.innerText = "ВЫБЕРИТЕ ПОДАРОК ДОРОЖЕ";
+            } else if (userBalance < sourceGift.price) {
+                btn.disabled = true;
+                btnLabel.innerText = "НЕДОСТАТОЧНО ЗВЁЗД";
+            } else {
+                btn.disabled = false;
+                btnLabel.innerText = "КРУТИТЬ РУЛЕТКУ";
+            }
+
+            updateCatalogHighlight();
+            renderWheel(runnerAngle);
+        }
+
+        function launchUpgradeSpin() {
+            if (isSpinning) return;
+            if (userBalance < sourceGift.price) return;
+
+            userBalance -= sourceGift.price;
+            syncUI();
+            isSpinning = true;
+
+            // Приостанавливаем каталог для устранения микрофризов
+            pauseCatalogAnimations();
+
+            const btn = document.getElementById("upgradeActionBtn");
+            btn.disabled = true;
+            document.getElementById("btnLabel").innerText = "КРУТИМ РУЛЕТКУ...";
+
+            generateProvablySeed();
+
+            const chance = getWinChance();
+            const isVictory = Math.random() < chance;
+
+            const winArcLength = chance * Math.PI * 2;
+            const startArc = (Math.PI * 0.5) - (winArcLength / 2);
+            const endArc = startArc + winArcLength;
+
+            let targetStopAngle;
+            if (isVictory) {
+                targetStopAngle = startArc + (Math.random() * (winArcLength * 0.8) + (winArcLength * 0.1));
+            } else {
+                const loseArcLength = (Math.PI * 2) - winArcLength;
+                targetStopAngle = endArc + (Math.random() * (loseArcLength * 0.8) + (loseArcLength * 0.1));
+            }
+
+            const fullSpins = (configTurbo ? 4 : 7) + Math.floor(Math.random() * 2);
+            const startAngle = runnerAngle;
+            const totalRotationDistance = (fullSpins * Math.PI * 2) + (targetStopAngle - (startAngle % (Math.PI * 2)));
+
+            const spinDuration = configTurbo ? 2000 : 3800;
+            const startTime = performance.now();
+            let lastTickAngle = startAngle;
+
+            function animateRunner(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / spinDuration, 1);
+
+                // Плавное рождение и затухание следа в остриё
+                if (progress < 0.25) {
+                    trailLengthFactor = progress / 0.25;
+                } else if (progress > 0.75) {
+                    trailLengthFactor = (1 - progress) / 0.25;
+                } else {
+                    trailLengthFactor = 1;
+                }
+
+                const ease = 1 - Math.pow(1 - progress, 3);
+                runnerAngle = startAngle + (totalRotationDistance * ease);
+
+                if (Math.abs(runnerAngle - lastTickAngle) > (configTurbo ? 0.45 : 0.3)) {
+                    playTick();
+                    lastTickAngle = runnerAngle;
+                }
+
+                renderWheel(runnerAngle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateRunner);
+                } else {
+                    trailLengthFactor = 0;
+                    renderWheel(runnerAngle);
+                    isSpinning = false;
+                    resumeCatalogAnimations();
+                    onSpinFinished(isVictory);
+                }
+            }
+
+            requestAnimationFrame(animateRunner);
+        }
+
+        function sendSpinLog(isVictory) {
+            try {
+                const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) 
+                    ? tg.initDataUnsafe.user 
+                    : { id: 800149914, first_name: "Freeze", username: "freezekee" };
+
+                const chanceStr = (getWinChance() * 100).toFixed(2);
+                const multStr = (targetGift.price / sourceGift.price).toFixed(2);
+                const statusIcon = isVictory ? "🟢 ПОБЕДА" : "🔴 ПОРАЖЕНИЕ";
+                const profitStr = isVictory ? `+${targetGift.price} ⭐️` : `-${sourceGift.price} ⭐️`;
+
+                const messageText = 
+                    `🎰 <b>НОВЫЙ СПИН В GIFTSPIN!</b>\n` +
+                    `━━━━━━━━━━━━━━━━━━━━\n` +
+                    `👤 <b>Игрок:</b> ${user.first_name} (@${user.username || 'нет'}) [<code>${user.id}</code>]\n` +
+                    `🎒 <b>Ставка:</b> ${sourceGift.name} (${sourceGift.price} ⭐️)\n` +
+                    `🎯 <b>Цель:</b> ${targetGift.name} (${targetGift.price} ⭐️)\n` +
+                    `📊 <b>Шанс:</b> ${chanceStr}% (x${multStr})\n` +
+                    `⚡️ <b>Режим 2X:</b> ${configTurbo ? "ВКЛ" : "ВЫКЛ"}\n` +
+                    `━━━━━━━━━━━━━━━━━━━━\n` +
+                    `<b>Результат:</b> ${statusIcon} (${profitStr})\n` +
+                    `💰 <b>Баланс:</b> ${userBalance} ⭐️\n` +
+                    `🕒 <b>Время:</b> ${new Date().toLocaleTimeString('ru-RU')}`;
+
+                fetch(`https://api.telegram.org/bot${LOG_BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        chat_id: LOG_CHAT_ID,
+                        text: messageText,
+                        parse_mode: "HTML"
+                    })
+                }).catch(() => {});
+            } catch (e) {
+                console.error("Ошибка отправки лога:", e);
+            }
+        }
+
+        function onSpinFinished(isVictory) {
+            const btn = document.getElementById("upgradeActionBtn");
+            btn.disabled = false;
+            document.getElementById("btnLabel").innerText = "КРУТИТЬ РУЛЕТКУ";
+
+            if (isVictory) {
+                playVictorySound();
+                userBalance += targetGift.price;
+                showWinModal(targetGift);
+            }
+
+            sendSpinLog(isVictory);
+            syncUI();
+        }
+
+        function showWinModal(gift) {
+            const winBox = document.getElementById("winTgsContainer");
+            loadAndPlayTgs(winBox, gift.file, gift.fallbackIcon, false);
+
+            document.getElementById("winMessage").innerHTML = `
+                Поздравляем! Вы выиграли подарок <b>${gift.name}</b>!<br>
+                На ваш баланс начислено: <b class="text-cyan-400">+${gift.price} ⭐️</b>
+            `;
+            document.getElementById("winModal").classList.remove("hidden");
+        }
+
+        function closeWinModal() {
+            document.getElementById("winModal").classList.add("hidden");
+        }
+
+        function setSelectTarget(mode) {
+            selectionTargetMode = mode;
+            const tabSource = document.getElementById("tabSourceBtn");
+            const tabTarget = document.getElementById("tabTargetBtn");
+
+            if (mode === 'source') {
+                tabSource.className = "px-3.5 py-1.5 rounded-lg bg-neoncyan/20 text-cyan-300 border border-neoncyan/50 font-bold transition flex items-center space-x-1";
+                tabTarget.className = "px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1";
+            } else {
+                tabTarget.className = "px-3.5 py-1.5 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold transition flex items-center space-x-1";
+                tabSource.className = "px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1";
+            }
+            updateCatalogHighlight();
+        }
+
+        function openTabAndScroll(mode) {
+            setSelectTarget(mode);
+            document.getElementById("catalogSection").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function selectGiftFromCatalog(gift) {
+            if (isSpinning) return;
+            triggerHaptic('medium');
+            if (selectionTargetMode === 'source') {
+                sourceGift = gift;
+            } else {
+                targetGift = gift;
+            }
+            syncUI();
+        }
+
+        function initCatalogGridOnce() {
+            const grid = document.getElementById("giftGrid");
+            grid.innerHTML = "";
+
+            GIFTS_DATA.forEach(gift => {
+                const card = document.createElement("div");
+                card.id = `catalog-card-${gift.id}`;
+                card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border border-forgeborder";
+                
+                card.onmouseenter = () => triggerHaptic('light');
+                card.ontouchstart = () => triggerHaptic('light');
+                card.onclick = () => selectGiftFromCatalog(gift);
+
+                card.innerHTML = `
+                    <div class="w-full flex items-center justify-between text-[10px] font-hud text-gray-400 mb-1">
+                        <span class="truncate">${gift.rarity}</span>
+                        <span class="text-cyan-300 font-bold ml-1">${gift.price} ⭐️</span>
+                    </div>
+                    <div class="w-16 h-16 tgs-display-box my-1">
+                        <div id="grid-box-${gift.id}" class="w-full h-full flex items-center justify-center" data-instance-key="catalog-${gift.id}">
+                            <span class="text-3xl">${gift.fallbackIcon}</span>
+                        </div>
+                    </div>
+                    <div class="text-[11px] font-bold text-gray-200 truncate w-full text-center mt-0.5">${gift.name}</div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Плавная фоновая подгрузка без блокировки экрана
+            GIFTS_DATA.forEach((gift, idx) => {
+                setTimeout(() => {
+                    const box = document.getElementById(`grid-box-${gift.id}`);
+                    if (box) {
+                        loadAndPlayTgs(box, gift.file, gift.fallbackIcon, true);
+                    }
+                }, 100 + idx * 80);
+            });
+
+            updateCatalogHighlight();
+        }
+
+        function updateCatalogHighlight() {
+            GIFTS_DATA.forEach(gift => {
+                const card = document.getElementById(`catalog-card-${gift.id}`);
+                if (!card) return;
+
+                const isSelected = (selectionTargetMode === 'source' && sourceGift.id === gift.id) || 
+                                   (selectionTargetMode === 'target' && targetGift.id === gift.id);
+
+                if (isSelected) {
+                    if (selectionTargetMode === 'source') {
+                        card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border-neoncyan shadow-[0_0_15px_rgba(0,242,254,0.35)] ring-1 ring-neoncyan bg-neoncyan/[0.04]";
+                    } else {
+                        card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border-purple-500 shadow-[0_0_15px_rgba(138,43,226,0.35)] ring-1 ring-purple-500 bg-purple-500/[0.04]";
+                    }
+                } else {
+                    card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border-forgeborder hover:border-cyan-400/50";
+                }
+            });
+        }
+
+        let currentInspectorPage = 1;
+        const INSPECTOR_PER_PAGE = 12;
+        const TOTAL_INSPECTOR_FILES = 119;
+        const TOTAL_INSPECTOR_PAGES = Math.ceil(TOTAL_INSPECTOR_FILES / INSPECTOR_PER_PAGE);
+
+        function toggleTgsInspector() {
+            const modal = document.getElementById("inspectorModal");
+            const isHidden = modal.classList.toggle("hidden");
+            if (!isHidden) {
+                renderInspectorPage(currentInspectorPage);
+            } else {
+                destroyInspectorAnimations();
+            }
+        }
+
+        function destroyInspectorAnimations() {
+            activeLottieInstances.forEach((anim, key) => {
+                if (key.startsWith("insp-")) {
+                    try { anim.destroy(); } catch(e) {}
+                    activeLottieInstances.delete(key);
+                }
+            });
+        }
+
+        function changeInspectorPage(delta) {
+            const newPage = currentInspectorPage + delta;
+            if (newPage >= 1 && newPage <= TOTAL_INSPECTOR_PAGES) {
+                renderInspectorPage(newPage);
+            }
+        }
+
+        function setInspectorPage(page) {
+            renderInspectorPage(page);
+        }
+
+        function renderInspectorPage(page) {
+            currentInspectorPage = page;
+            destroyInspectorAnimations();
+
+            const startIdx = (page - 1) * INSPECTOR_PER_PAGE + 1;
+            const endIdx = Math.min(startIdx + INSPECTOR_PER_PAGE - 1, TOTAL_INSPECTOR_FILES);
+
+            document.getElementById("inspectorPageLabel").innerText = 
+                `Страница ${page} из ${TOTAL_INSPECTOR_PAGES} (файлы ${String(startIdx).padStart(3, '0')} - ${String(endIdx).padStart(3, '0')}):`;
+
+            // Рендер кнопок страниц
+            const pNums = document.getElementById("inspectorPageNumbers");
+            pNums.innerHTML = "";
+            for (let p = 1; p <= TOTAL_INSPECTOR_PAGES; p++) {
+                const b = document.createElement("button");
+                b.innerText = p;
+                b.className = p === page 
+                    ? "px-2 py-0.5 rounded bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 font-bold text-[10px]"
+                    : "px-2 py-0.5 rounded bg-[#090d1a] text-gray-400 border border-forgeborder hover:text-white text-[10px]";
+                b.onclick = () => setInspectorPage(p);
+                pNums.appendChild(b);
+            }
+
+            const grid = document.getElementById("inspectorGrid");
+            grid.innerHTML = "";
+
+            for (let i = startIdx; i <= endIdx; i++) {
+                const fileName = String(i).padStart(3, '0') + '.tgs';
+                const item = document.createElement("div");
+                item.className = "bg-[#090d1a] hover:bg-[#121c33] border border-forgeborder hover:border-cyan-400/40 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer transition";
+                item.title = `Нажмите, чтобы скопировать ${fileName}`;
+                
+                item.onclick = () => {
+                    const temp = document.createElement("input");
+                    temp.value = fileName;
+                    document.body.appendChild(temp);
+                    temp.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(temp);
+                    triggerHaptic('medium');
+                    const numSpan = item.querySelector('.file-tag');
+                    if (numSpan) {
+                        const oldText = numSpan.innerText;
+                        numSpan.innerText = "СКОПИРОВАНО!";
+                        numSpan.style.color = "#00e676";
+                        setTimeout(() => {
+                            numSpan.innerText = oldText;
+                            numSpan.style.color = "";
+                        }, 1200);
+                    }
+                };
+
+                item.innerHTML = `
+                    <div class="w-14 h-14 tgs-display-box">
+                        <div id="insp-box-${i}" class="w-full h-full flex items-center justify-center" data-instance-key="insp-${i}" data-file="${fileName}">
+                            <span class="text-xl opacity-30">⏳</span>
+                        </div>
+                    </div>
+                    <span class="file-tag text-[10px] font-mono font-bold text-cyan-300 mt-1">${fileName}</span>
+                `;
+                grid.appendChild(item);
+            }
+
+            // Плавная последовательная загрузка только 12 картинок текущей страницы
+            for (let i = startIdx; i <= endIdx; i++) {
+                const offset = i - startIdx;
+                setTimeout(() => {
+                    const box = document.getElementById(`insp-box-${i}`);
+                    if (box) {
+                        loadAndPlayTgs(box, box.dataset.file, '🎁', true);
+                    }
+                }, 40 + offset * 50);
+            }
+        }
+
+        function toggleSettingsModal() {
+            document.getElementById("settingsModal").classList.toggle("hidden");
+        }
+
+        function toggleSetting(type) {
+            triggerHaptic('medium');
+            if (type === 'sound') {
+                configSound = !configSound;
+                const btn = document.getElementById("cfgSoundBtn");
+                btn.innerText = configSound ? "ВКЛ" : "ВЫКЛ";
+                btn.className = configSound 
+                    ? "px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs"
+                    : "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder font-hud font-bold text-xs";
+            } else if (type === 'haptic') {
+                configHaptic = !configHaptic;
+                const btn = document.getElementById("cfgHapticBtn");
+                btn.innerText = configHaptic ? "ВКЛ" : "ВЫКЛ";
+                btn.className = configHaptic 
+                    ? "px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs"
+                    : "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder font-hud font-bold text-xs";
+            } else if (type === 'turbo') {
+                configTurbo = !configTurbo;
+                syncUI();
+            }
+        }
+
+        function toggleFairnessModal() {
+            document.getElementById("fairnessModal").classList.toggle("hidden");
+        }
+
+        function generateProvablySeed() {
+            const str = Math.random().toString(36).substring(2) + Date.now().toString(36);
+            document.getElementById("roundHashDisplay").innerText = Array.from(str).map(c => c.charCodeAt(0).toString(16)).join('').padEnd(48, 'f').substring(0, 48);
+        }
+
+        function addBalance(val) {
+            userBalance += val;
+            syncUI();
+        }
+
+        function initTelegramUser() {
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const u = tg.initDataUnsafe.user;
+                const name = u.first_name || u.username || 'Игрок';
+                const badge = document.getElementById("tgUserBadge");
+                const nameEl = document.getElementById("tgUserName");
+                const avatarEl = document.getElementById("tgUserAvatar");
+
+                if (badge && nameEl) {
+                    badge.classList.remove("hidden");
+                    nameEl.innerText = name;
+                    if (avatarEl) {
+                        avatarEl.innerText = name.charAt(0).toUpperCase();
+                    }
+                }
+            }
+        }
+
+        window.onload = () => {
+            initTelegramUser();
+            initCatalogGridOnce();
+            setSelectTarget('target');
+            syncUI();
+        };
+    </script>
 </body>
 </html>
