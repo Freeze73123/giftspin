@@ -472,6 +472,10 @@
                 if (!st.anim) continue;
                 try { shouldPlay(id) ? st.anim.play() : st.anim.pause(); } catch (e) {}
             }
+            tileLive.forEach(rec => {
+                if (!rec.anim) return;
+                try { (!document.hidden && !isSpinning) ? rec.anim.play() : rec.anim.pause(); } catch (e) {}
+            });
         }
 
         async function loadLive(box, gift) {
@@ -492,7 +496,7 @@
                 });
                 applyPlayState();
             } catch (err) {
-                if (req === st.req) box.innerHTML = `<span class="text-6xl select-none">${gift.icon}</span>`;
+                if (req === st.req) { console.error('Витрина:', e); box.innerHTML = `<span class="text-6xl select-none">${gift.icon}</span>`; }
             }
         }
 
@@ -505,14 +509,23 @@
         }
 
         // Живые анимации в каталоге: играют только карточки, которые сейчас видны на экране.
-        // Один общий таймер на ~30 кадров/с вместо десятков отдельных плееров.
         const tileVisible = {};
         const tileLive = new Map();
-        let tickerOn = false, lastTick = 0;
+
+        function showTileError(gift, e) {
+            console.error("Анимация каталога:", gift.key, e);
+            const card = document.getElementById(`catalog-card-${gift.id}`);
+            if (card && !card.querySelector(".tile-err")) {
+                const m = document.createElement("div");
+                m.className = "tile-err text-[9px] text-red-400 text-center";
+                m.innerText = "ошибка: " + String((e && e.message) || e).slice(0, 40);
+                card.appendChild(m);
+            }
+        }
 
         async function startTile(gift) {
             if (tileLive.has(gift.id)) return;
-            const rec = { anim: null, holder: null, dead: false, frame: 0, total: 1, fr: 60 };
+            const rec = { anim: null, holder: null, dead: false };
             tileLive.set(gift.id, rec);
             const box = document.getElementById(`grid-box-${gift.id}`);
             try {
@@ -523,19 +536,18 @@
                 box.parentNode.appendChild(holder);
                 rec.holder = holder;
                 const anim = lottie.loadAnimation({
-                    container: holder, renderer: 'canvas', loop: false, autoplay: false, animationData: data,
+                    container: holder, renderer: 'canvas', loop: true, autoplay: true,
+                    animationData: JSON.parse(JSON.stringify(data)),
                     rendererSettings: { preserveAspectRatio: 'xMidYMid meet', clearCanvas: true, dpr: Math.min(window.devicePixelRatio || 1, 2) }
                 });
                 rec.anim = anim;
-                rec.total = Math.max(1, data.op - data.ip);
-                rec.fr = data.fr || 60;
-                rec.frame = Math.random() * rec.total;
-                await new Promise(r => { if (anim.isLoaded) r(); else { anim.addEventListener('DOMLoaded', r); setTimeout(r, 1500); } });
-                if (rec.dead) return;
-                anim.goToAndStop(rec.frame, true);
-                box.style.visibility = "hidden";
-                ensureTicker();
-            } catch (e) { stopTile(gift); }
+                const onFrame = () => { box.style.visibility = "hidden"; try { anim.removeEventListener('enterFrame', onFrame); } catch (e) {} };
+                anim.addEventListener('enterFrame', onFrame);
+                applyPlayState();
+            } catch (e) {
+                showTileError(gift, e);
+                stopTile(gift);
+            }
         }
 
         function stopTile(gift) {
@@ -553,29 +565,6 @@
             GIFTS_DATA.forEach(g => {
                 if (configCatalogAnim && tileVisible[g.id] === true) startTile(g); else stopTile(g);
             });
-        }
-
-        function ensureTicker() {
-            if (tickerOn) return;
-            tickerOn = true;
-            lastTick = performance.now();
-            requestAnimationFrame(tick);
-        }
-
-        function tick(now) {
-            if (!tileLive.size) { tickerOn = false; return; }
-            const dt = now - lastTick;
-            if (dt >= 33) {
-                lastTick = now;
-                if (!isSpinning && !document.hidden) {
-                    tileLive.forEach(rec => {
-                        if (!rec.anim || rec.dead) return;
-                        rec.frame = (rec.frame + Math.min(dt, 100) / 1000 * rec.fr) % rec.total;
-                        try { rec.anim.goToAndStop(rec.frame, true); } catch (e) {}
-                    });
-                }
-            }
-            requestAnimationFrame(tick);
         }
 
         document.addEventListener("visibilitychange", applyPlayState);
