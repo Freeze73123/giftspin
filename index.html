@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GIFTSPIN — Telegram Gifts Wheel</title>
-    <!-- Telegram Mini App WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Pako (Декомпрессор GZip для чтения формата .tgs) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <!-- Lottie Web (Официальный плеер анимаций Telegram) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 
     <script>
@@ -50,13 +46,8 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
+        .font-hud { font-family: 'Chakra Petch', sans-serif; letter-spacing: 0.05em; }
 
-        .font-hud {
-            font-family: 'Chakra Petch', sans-serif;
-            letter-spacing: 0.05em;
-        }
-
-        /* Кнопка вращения рулетки */
         .btn-spin-action {
             background: linear-gradient(135deg, #00f2fe 0%, #0072ff 50%, #8a2be2 100%);
             box-shadow: 0 4px 25px rgba(0, 242, 254, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7);
@@ -92,16 +83,11 @@
         .item-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 1px;
             background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.3), transparent);
         }
-
-        .cyan-glow {
-            filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.5));
-        }
+        .cyan-glow { filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.5)); }
 
         .gift-card-interactive {
             transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -111,11 +97,8 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 24px rgba(0, 242, 254, 0.22);
         }
-        .gift-card-interactive:active {
-            transform: scale(0.96);
-        }
+        .gift-card-interactive:active { transform: scale(0.96); }
 
-        /* ЧИСТЫЙ КОНТЕЙНЕР АНИМАЦИИ (ПОДАРКИ НЕ РЕЖУТСЯ) */
         .tgs-display-box {
             position: relative;
             display: flex;
@@ -123,33 +106,23 @@
             justify-content: center;
             overflow: visible;
         }
-        .tgs-display-box svg, .tgs-display-box canvas {
+        /* Тень убрана с анимированных canvas: она пересчитывалась на каждом кадре и грузила процессор */
+        .tgs-display-box canvas, .tgs-display-box img {
             max-width: 100%;
             max-height: 100%;
             display: block;
             margin: auto;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
         }
 
-        ::-webkit-scrollbar {
-            height: 5px;
-            width: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #070a13;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #19243d;
-            border-radius: 4px;
-        }
+        ::-webkit-scrollbar { height: 5px; width: 5px; }
+        ::-webkit-scrollbar-track { background: #070a13; }
+        ::-webkit-scrollbar-thumb { background: #19243d; border-radius: 4px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
 
     <header class="bg-[#090d1a]/95 border-b border-forgeborder backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
-            
-            <!-- Логотип: 4-конечная звезда в пунктирном кольце + GIFTSPIN MINI APP -->
             <div class="flex items-center space-x-3">
                 <div class="flex items-center space-x-2.5 cursor-pointer group">
                     <div class="relative w-8 h-8 flex items-center justify-center flex-shrink-0">
@@ -188,7 +161,6 @@
                 </div>
             </div>
 
-            <!-- Правый блок: баланс (строго одна звезда) и кнопка настроек -->
             <div class="flex items-center space-x-2.5">
                 <div class="bg-[#0e1526] border border-forgeborder rounded-xl px-3 py-1.5 flex items-center space-x-2 shadow-inner">
                     <span class="text-sm select-none">⭐️</span>
@@ -196,9 +168,7 @@
                         <span class="text-[9px] text-gray-400 font-hud leading-none">БАЛАНС</span>
                         <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">650</span>
                     </div>
-                    <button onclick="addBalance(250)" title="Пополнить баланс" class="ml-1 w-5 h-5 rounded-md bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">
-                        +
-                    </button>
+                    <button onclick="addBalance(250)" title="Пополнить баланс" class="ml-1 w-5 h-5 rounded-md bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">+</button>
                 </div>
 
                 <div id="tgUserBadge" class="hidden sm:flex items-center space-x-1.5 bg-[#0e1526] border border-forgeborder rounded-xl px-2.5 py-1.5 text-xs font-hud text-gray-300">
@@ -206,10 +176,7 @@
                     <span id="tgUserName" class="max-w-[70px] truncate">Игрок</span>
                 </div>
 
-                <!-- КНОПКА НАСТРОЕК ⚙️ -->
-                <button onclick="toggleSettingsModal()" title="Настройки" class="w-8 h-8 rounded-xl bg-forgecard hover:bg-[#151e33] border border-forgeborder text-gray-300 hover:text-white flex items-center justify-center text-sm transition">
-                    ⚙️
-                </button>
+                <button onclick="toggleSettingsModal()" title="Настройки" class="w-8 h-8 rounded-xl bg-forgecard hover:bg-[#151e33] border border-forgeborder text-gray-300 hover:text-white flex items-center justify-center text-sm transition">⚙️</button>
             </div>
         </div>
     </header>
@@ -218,7 +185,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 lg:gap-4 items-center">
 
-            <!-- ВИТРИНА 1: ВАША СТАВКА (СЛЕВА) -->
+            <!-- ВИТРИНА 1: ВАША СТАВКА -->
             <div class="md:col-span-4 order-2 md:order-1">
                 <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[280px] border border-forgeborder relative">
                     <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
@@ -246,32 +213,19 @@
                 </div>
             </div>
 
-            <!-- ВИТРИНА ЦЕНТРА: РУЛЕТКА -->
+            <!-- ЦЕНТР: РУЛЕТКА -->
             <div class="md:col-span-4 order-1 md:order-2 flex flex-col items-center justify-center py-2">
-                
                 <div class="relative w-[300px] h-[300px] sm:w-[330px] sm:h-[330px] flex items-center justify-center">
-                    
-                    <!-- Фоновое неоновое свечение -->
                     <div id="wheelDynamicGlow" class="absolute inset-4 rounded-full blur-3xl transition-all duration-500 opacity-25 bg-cyan-500 pointer-events-none"></div>
-
-                    <!-- Canvas: рельс, деления, вертикальный градиент и бегунок со стрелкой -->
                     <canvas id="upgradeCanvas" width="340" height="340" class="relative z-10 block max-w-full h-auto"></canvas>
-
-                    <!-- Центр: только шанс и множитель (без лишней звезды) -->
                     <div class="absolute z-20 flex flex-col items-center justify-center pointer-events-none">
                         <div class="text-[10px] font-hud text-gray-400 font-bold uppercase tracking-wider">Шанс победы</div>
-                        <div id="centerChanceDisplay" class="font-hud font-black text-3xl tracking-tight transition-colors duration-300" style="color: #00f2fe;">
-                            13.80%
-                        </div>
-                        <div id="multiplierBadge" class="text-[11px] font-hud font-bold text-gray-300 bg-black/75 px-2.5 py-0.5 rounded-full border border-forgeborder mt-1">
-                            x6.67
-                        </div>
+                        <div id="centerChanceDisplay" class="font-hud font-black text-3xl tracking-tight transition-colors duration-300" style="color: #00f2fe;">13.80%</div>
+                        <div id="multiplierBadge" class="text-[11px] font-hud font-bold text-gray-300 bg-black/75 px-2.5 py-0.5 rounded-full border border-forgeborder mt-1">x6.67</div>
                     </div>
                 </div>
 
-                <!-- МИНИМАЛИСТИЧНЫЙ ТУМБЛЕР 2X ТУРБО И КНОПКА СПИНА -->
                 <div class="w-full max-w-[280px] sm:max-w-[320px] mt-3 flex flex-col items-center space-y-2.5">
-                    
                     <button id="quickTurboBtn" onclick="toggleSetting('turbo')" class="px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200">
                         <span class="text-xs">⚡️</span>
                         <span class="tracking-wider">2X ТУРБО:</span>
@@ -287,7 +241,7 @@
                 </div>
             </div>
 
-            <!-- ВИТРИНА 2: ЦЕЛЬ (СПРАВА) -->
+            <!-- ВИТРИНА 2: ЦЕЛЬ -->
             <div class="md:col-span-4 order-3">
                 <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[280px] border border-forgeborder relative">
                     <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
@@ -295,16 +249,16 @@
                             <span>ЦЕЛЬ (ВЫИГРЫШ)</span>
                             <span>▶</span>
                         </span>
-                        <span id="targetPriceBadge" class="bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20 font-bold">100 ⭐️</span>
+                        <span id="targetPriceBadge" class="bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20 font-bold">50 ⭐️</span>
                     </div>
 
                     <div id="targetDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
                         <div class="w-28 h-28 tgs-display-box mb-1">
                             <div id="targetTgsBox" class="w-full h-full flex items-center justify-center">
-                                <span class="text-6xl animate-pulse">💍</span>
+                                <span class="text-6xl animate-pulse">🎂</span>
                             </div>
                         </div>
-                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Кубок</div>
+                        <div id="targetName" class="text-base font-bold text-white tracking-wide">Торт</div>
                         <div class="text-[11px] text-gray-400 mt-0.5">Оригинальный подарок Telegram</div>
                     </div>
 
@@ -314,36 +268,25 @@
                     </button>
                 </div>
             </div>
-
         </div>
 
         <section id="catalogSection" class="mt-6 bg-[#0a0f1d]/95 border border-forgeborder rounded-2xl p-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-forgeborder/60">
                 <div class="flex items-center space-x-2">
                     <div class="w-2.5 h-2.5 rounded-sm bg-neoncyan"></div>
-                    <h2 class="font-hud font-bold text-sm uppercase text-gray-200 tracking-wide">
-                        КАТАЛОГ ПОДАРКОВ TELEGRAM
-                    </h2>
+                    <h2 class="font-hud font-bold text-sm uppercase text-gray-200 tracking-wide">КАТАЛОГ ПОДАРКОВ TELEGRAM</h2>
                 </div>
-
-                <!-- ВКЛАДКИ: ИНВЕНТАРЬ И ПОДАРКИ ДЛЯ АПГРЕЙДА -->
                 <div class="flex items-center space-x-2 text-xs font-hud">
                     <span class="text-gray-400 text-[11px]">Клик выбирает:</span>
                     <button id="tabSourceBtn" onclick="setSelectTarget('source')" class="px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1">
-                        <span>🎒</span>
-                        <span>ИНВЕНТАРЬ</span>
+                        <span>🎒</span><span>ИНВЕНТАРЬ</span>
                     </button>
                     <button id="tabTargetBtn" onclick="setSelectTarget('target')" class="px-3.5 py-1.5 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold transition flex items-center space-x-1">
-                        <span>🎯</span>
-                        <span>ПОДАРКИ ДЛЯ АПГРЕЙДА</span>
+                        <span>🎯</span><span>ПОДАРКИ ДЛЯ АПГРЕЙДА</span>
                     </button>
                 </div>
             </div>
-
-            <!-- Сетка подарков (строится 1 раз без утечек памяти) -->
-            <div id="giftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-3">
-                <!-- Карточки наполняются динамически скриптом -->
-            </div>
+            <div id="giftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-3"></div>
         </section>
 
         <div class="mt-4 mb-2 flex items-center justify-between text-[11px] text-gray-500 font-hud px-1">
@@ -351,25 +294,18 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-neoncyan"></span>
                 <span>SHA-256 PROVABLY FAIR VERIFIED (v1.0)</span>
             </div>
-            <button onclick="toggleFairnessModal()" class="hover:text-neoncyan underline">
-                Проверить честность спина
-            </button>
+            <button onclick="toggleFairnessModal()" class="hover:text-neoncyan underline">Проверить честность спина</button>
         </div>
     </main>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ⚙️ -->
+    <!-- НАСТРОЙКИ ⚙️ -->
     <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud shadow-2xl">
             <div class="flex items-center justify-between pb-3 border-b border-forgeborder">
-                <span class="font-bold text-sm text-cyan-300 flex items-center space-x-2">
-                    <span>⚙️</span>
-                    <span>НАСТРОЙКИ ПРИЛОЖЕНИЯ</span>
-                </span>
+                <span class="font-bold text-sm text-cyan-300 flex items-center space-x-2"><span>⚙️</span><span>НАСТРОЙКИ ПРИЛОЖЕНИЯ</span></span>
                 <button onclick="toggleSettingsModal()" class="text-gray-400 hover:text-white font-bold text-base">✕</button>
             </div>
-            
             <div class="mt-4 space-y-3 font-sans text-xs">
-                <!-- Звук -->
                 <div class="flex items-center justify-between bg-[#090d1a] p-3 rounded-xl border border-forgeborder">
                     <div class="flex items-center space-x-2.5">
                         <span class="text-base">🔊</span>
@@ -378,12 +314,8 @@
                             <div class="text-[10px] text-gray-400">Звуки вращения рулетки и победы</div>
                         </div>
                     </div>
-                    <button id="cfgSoundBtn" onclick="toggleSetting('sound')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">
-                        ВКЛ
-                    </button>
+                    <button id="cfgSoundBtn" onclick="toggleSetting('sound')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">ВКЛ</button>
                 </div>
-
-                <!-- Вибрация -->
                 <div class="flex items-center justify-between bg-[#090d1a] p-3 rounded-xl border border-forgeborder">
                     <div class="flex items-center space-x-2.5">
                         <span class="text-base">📳</span>
@@ -392,68 +324,26 @@
                             <div class="text-[10px] text-gray-400">Вибрация телефона при вращении</div>
                         </div>
                     </div>
-                    <button id="cfgHapticBtn" onclick="toggleSetting('haptic')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">
-                        ВКЛ
-                    </button>
-                </div>
-
-                <!-- Кнопка TGS Инспектора -->
-                <div class="pt-2 border-t border-forgeborder/60">
-                    <button onclick="toggleTgsInspector()" class="w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 rounded-xl font-hud text-xs font-bold transition flex items-center justify-center space-x-1.5">
-                        <span>🔍</span>
-                        <span>БЫСТРЫЙ ИНСПЕКТОР ФАЙЛОВ TGS (БЕЗ ЛАГОВ)</span>
-                    </button>
-                    <div class="text-[10px] text-gray-400 text-center mt-1">Постраничный просмотр всех 119 файлов</div>
+                    <button id="cfgHapticBtn" onclick="toggleSetting('haptic')" class="px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs">ВКЛ</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ИНСПЕКТОРА TGS ФАЙЛОВ (ПОСТРАНИЧНОЕ И БЕЗ ЗАВИСАНИЙ) -->
-    <div id="inspectorModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col p-4 max-w-lg mx-auto">
-        <div class="flex items-center justify-between pb-3 border-b border-forgeborder">
-            <span class="font-hud font-bold text-sm text-cyan-300">🔍 ИНСПЕКТОР ФАЙЛОВ TGS (119 ФАЙЛОВ)</span>
-            <button onclick="toggleTgsInspector()" class="text-gray-400 hover:text-white font-bold text-base px-2">✕</button>
-        </div>
-        
-        <div class="text-[11px] text-gray-400 my-2 font-hud flex items-center justify-between">
-            <span id="inspectorPageLabel">Страница 1 из 10 (файлы 001 - 012):</span>
-            <span class="text-cyan-400 text-[10px]">Клик копирует имя</span>
-        </div>
-
-        <!-- Кнопки пагинации по страницам -->
-        <div class="flex items-center justify-between mb-2 font-hud text-xs gap-1">
-            <button onclick="changeInspectorPage(-1)" class="px-3 py-1 rounded bg-[#0e1628] hover:bg-cyan-500/20 text-gray-200 border border-forgeborder font-bold">◀ Назад</button>
-            <div id="inspectorPageNumbers" class="flex items-center space-x-1 overflow-x-auto py-1 max-w-[240px]">
-                <!-- Номера страниц -->
-            </div>
-            <button onclick="changeInspectorPage(1)" class="px-3 py-1 rounded bg-[#0e1628] hover:bg-cyan-500/20 text-gray-200 border border-forgeborder font-bold">Вперёд ▶</button>
-        </div>
-
-        <div id="inspectorGrid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 pr-1"></div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО ПОБЕДЫ -->
+    <!-- ПОБЕДА -->
     <div id="winModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#0e1628] border-2 border-neongreen/60 rounded-2xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
             <div class="absolute -top-12 inset-x-0 h-32 bg-neongreen/20 blur-3xl pointer-events-none"></div>
-
             <div class="w-24 h-24 tgs-display-box mb-2">
-                <div id="winTgsContainer" class="w-full h-full flex items-center justify-center">
-                    <span class="text-6xl">🎉</span>
-                </div>
+                <div id="winTgsContainer" class="w-full h-full flex items-center justify-center"><span class="text-6xl">🎉</span></div>
             </div>
             <span class="font-hud font-black text-xl text-neongreen uppercase tracking-wider mb-1">УСПЕШНЫЙ СПИН!</span>
-            <p id="winMessage" class="text-xs text-gray-300 mb-5 leading-relaxed">
-                Вы успешно выиграли целевой подарок!
-            </p>
-            <button onclick="closeWinModal()" class="btn-spin-action w-full py-2.5 rounded-xl font-hud font-bold text-xs uppercase">
-                ЗАБРАТЬ ПОДАРОК
-            </button>
+            <p id="winMessage" class="text-xs text-gray-300 mb-5 leading-relaxed">Вы успешно выиграли целевой подарок!</p>
+            <button onclick="closeWinModal()" class="btn-spin-action w-full py-2.5 rounded-xl font-hud font-bold text-xs uppercase">ЗАБРАТЬ ПОДАРОК</button>
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ЧЕСТНОСТИ SHA-256 -->
+    <!-- PROVABLY FAIR -->
     <div id="fairnessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud">
             <div class="flex items-center justify-between pb-2 border-b border-forgeborder">
@@ -471,161 +361,168 @@
     </div>
 
     <script>
-        // --------------------------------------------------------------------------
-        // СПИСОК 11 ПОДАРКОВ TELEGRAM С ОБНОВЛЕННЫМИ НОМЕРАМИ ИЗ НОВОГО ПАКА
-        // --------------------------------------------------------------------------
+        // ----------------------------------------------------------------------
+        // 11 ПОДАРКОВ. Файлы лежат в папке gifts/ (heart.tgs, bear.tgs и т.д.)
+        // ----------------------------------------------------------------------
         const GIFTS_DATA = [
-            { id: 95, name: "Мишка", price: 15, file: "095.tgs", fallbackIcon: "🧸", rarity: "Обычный" },
-            { id: 13, name: "Пряник", price: 15, file: "013.tgs", fallbackIcon: "🍪", rarity: "Обычный" },
-            { id: 15, name: "Кубок", price: 25, file: "015.tgs", fallbackIcon: "🏆", rarity: "Обычный" },
-            { id: 36, name: "Подарок", price: 25, file: "036.tgs", fallbackIcon: "🎁", rarity: "Обычный" },
-            { id: 74, name: "Лягушонок", price: 50, file: "074.tgs", fallbackIcon: "🐸", rarity: "Редкий" },
-            { id: 9, name: "Клавиша", price: 50, file: "009.tgs", fallbackIcon: "⌨️", rarity: "Редкий" },
-            { id: 93, name: "Праздник 5", price: 50, file: "093.tgs", fallbackIcon: "🎉", rarity: "Редкий" },
-            { id: 99, name: "Торт", price: 50, file: "099.tgs", fallbackIcon: "🎂", rarity: "Эпический" },
-            { id: 37, name: "Кольцо", price: 100, file: "037.tgs", fallbackIcon: "💍", rarity: "Эпический" },
-            { id: 112, name: "Шампанское", price: 100, file: "112.tgs", fallbackIcon: "🍾", rarity: "Легендарный" },
-            { id: 64, name: "Алмаз", price: 100, file: "064.tgs", fallbackIcon: "💎", rarity: "Коллекционный" }
+            { id: 1,  key: "heart",     name: "Сердце",     price: 15,  icon: "❤️", rarity: "Обычный" },
+            { id: 2,  key: "bear",      name: "Мишка",      price: 15,  icon: "🧸", rarity: "Обычный" },
+            { id: 3,  key: "rose",      name: "Роза",       price: 25,  icon: "🌹", rarity: "Обычный" },
+            { id: 4,  key: "present",   name: "Подарок",    price: 25,  icon: "🎁", rarity: "Обычный" },
+            { id: 5,  key: "bouquet",   name: "Букет",      price: 50,  icon: "💐", rarity: "Редкий" },
+            { id: 6,  key: "cake",      name: "Торт",       price: 50,  icon: "🎂", rarity: "Редкий" },
+            { id: 7,  key: "champagne", name: "Шампанское", price: 50,  icon: "🍾", rarity: "Редкий" },
+            { id: 8,  key: "rocket",    name: "Ракета",     price: 50,  icon: "🚀", rarity: "Редкий" },
+            { id: 9,  key: "ring",      name: "Кольцо",     price: 100, icon: "💍", rarity: "Эпический" },
+            { id: 10, key: "cup",       name: "Кубок",      price: 100, icon: "🏆", rarity: "Эпический" },
+            { id: 11, key: "diamond",   name: "Алмаз",      price: 100, icon: "💎", rarity: "Эпический" }
         ];
+        GIFTS_DATA.forEach(g => { g.file = `gifts/${g.key}.tgs`; });
 
         let userBalance = 650;
-        let sourceGift = GIFTS_DATA[0]; // Мишка (095.tgs)
-        let targetGift = GIFTS_DATA[7]; // Торт (099.tgs)
-        let selectionTargetMode = 'target'; // 'source' или 'target'
+        let sourceGift = GIFTS_DATA[1]; // Мишка
+        let targetGift = GIFTS_DATA[5]; // Торт
+        let selectionTargetMode = 'target';
 
         let isSpinning = false;
         let runnerAngle = Math.PI * 0.5;
-        let trailLengthFactor = 0; // Плавное рождение и затухание следа
+        let trailLengthFactor = 0;
 
-        // Настройки
         let configSound = true;
         let configHaptic = true;
         let configTurbo = false;
 
-        // Данные лог-бота в закрытый канал
-        const LOG_BOT_TOKEN = "8801130108:AAFXPBfbA8WdtXPP3NUleuHPsFpBNd3UiAY";
-        const LOG_CHAT_ID = "-1003780193612"; // GIFTSPIN | ЛОГИ
+        // Логирование в канал временно выключено: секретный ключ бота нельзя хранить в открытом коде.
+        // Вернём логи безопасным способом на шаге про безопасность.
+        const LOG_ENDPOINT = "";
 
+        // ---------------------- ЗАГРУЗКА И ПОКАЗ АНИМАЦИЙ ----------------------
         const tgsJsonCache = new Map();
-        const activeLottieInstances = new Map(); // key -> Lottie instance
 
-        // Безопасное асинхронное получение и декомпрессия TGS
-        async function fetchAndParseTgs(fileName) {
-            if (tgsJsonCache.has(fileName)) {
-                return tgsJsonCache.get(fileName);
-            }
-            let res = await fetch(fileName);
-            if (!res.ok) {
-                const altName = fileName.replace(/^0+/, '');
-                res = await fetch(altName);
-            }
-            if (!res.ok) throw new Error(`Файл ${fileName} не найден`);
-
-            const arrayBuffer = await res.arrayBuffer();
-            const decompressedString = pako.inflate(new Uint8Array(arrayBuffer), { to: 'string' });
-            const animationJson = JSON.parse(decompressedString);
-            tgsJsonCache.set(fileName, animationJson);
-            return animationJson;
+        async function fetchTgs(file) {
+            if (tgsJsonCache.has(file)) return tgsJsonCache.get(file);
+            const res = await fetch(file);
+            if (!res.ok) throw new Error("Файл не найден: " + file);
+            const buf = await res.arrayBuffer();
+            const json = JSON.parse(pako.inflate(new Uint8Array(buf), { to: 'string' }));
+            tgsJsonCache.set(file, json);
+            return json;
         }
 
-        // Оптимизированный запуск Lottie без зависаний
-        async function loadAndPlayTgs(container, fileName, fallbackEmoji, isCatalog = false) {
-            if (!container) return;
+        // Статичные картинки для каталога: один кадр рисуется один раз, потом анимация выгружается.
+        const stage = document.createElement("div");
+        stage.style.cssText = "position:absolute;left:-9999px;top:0;width:256px;height:256px;pointer-events:none";
+        document.body.appendChild(stage);
 
-            if (container.dataset.activeFile === fileName && container.dataset.loaded === "true") {
-                return;
+        const stillCache = new Map();
+        let stillQueue = Promise.resolve();
+
+        function getStill(file) {
+            if (!stillCache.has(file)) {
+                stillCache.set(file, stillQueue = stillQueue.then(() => makeStill(file)).catch(() => null));
             }
+            return stillCache.get(file);
+        }
 
-            const containerKey = container.id || container.dataset.instanceKey || Math.random().toString();
-            container.dataset.instanceKey = containerKey;
-
-            if (activeLottieInstances.has(containerKey)) {
-                try {
-                    activeLottieInstances.get(containerKey).destroy();
-                } catch(e) {}
-                activeLottieInstances.delete(containerKey);
+        async function makeStill(file) {
+            const data = await fetchTgs(file);
+            stage.innerHTML = "";
+            const anim = lottie.loadAnimation({
+                container: stage, renderer: 'canvas', loop: false, autoplay: false, animationData: data,
+                rendererSettings: { preserveAspectRatio: 'xMidYMid meet', clearCanvas: true, dpr: 1 }
+            });
+            await new Promise(r => { anim.addEventListener('DOMLoaded', r); setTimeout(r, 1500); });
+            anim.goToAndStop(Math.round(data.ip + (data.op - data.ip) * 0.33), true);
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            let url = null;
+            const src = stage.querySelector("canvas");
+            if (src) {
+                const out = document.createElement("canvas");
+                out.width = out.height = 192;
+                out.getContext("2d").drawImage(src, 0, 0, 192, 192);
+                url = out.toDataURL("image/png");
             }
+            anim.destroy();
+            stage.innerHTML = "";
+            return url;
+        }
 
-            container.dataset.activeFile = fileName;
+        // Живые анимации: только витрины (ставка, цель) и окно победы
+        const boxState = {};   // id блока -> { anim, file, req }
+        const boxVisible = {}; // id блока -> виден ли на экране
 
+        function shouldPlay(id) {
+            return !document.hidden && !isSpinning && boxVisible[id] !== false;
+        }
+
+        function applyPlayState() {
+            for (const id in boxState) {
+                const st = boxState[id];
+                if (!st.anim) continue;
+                try { shouldPlay(id) ? st.anim.play() : st.anim.pause(); } catch (e) {}
+            }
+        }
+
+        async function loadLive(box, gift) {
+            if (!box) return;
+            const id = box.id;
+            const st = boxState[id] || (boxState[id] = { anim: null, file: null, req: 0 });
+            if (st.file === gift.file && st.anim) return;
+            const req = ++st.req;
+            st.file = gift.file;
+            if (st.anim) { try { st.anim.destroy(); } catch (e) {} st.anim = null; }
             try {
-                const animationJson = await fetchAndParseTgs(fileName);
-                container.innerHTML = "";
-
-                // В каталоге используем canvas с немедленной фиксацией первого кадра
-                const anim = lottie.loadAnimation({
-                    container: container,
-                    renderer: 'canvas',
-                    loop: !isCatalog,
-                    autoplay: !isCatalog,
-                    animationData: animationJson,
-                    rendererSettings: {
-                        preserveAspectRatio: 'xMidYMid meet',
-                        clearCanvas: true
-                    }
+                const data = await fetchTgs(gift.file);
+                if (req !== st.req) return;
+                box.innerHTML = "";
+                st.anim = lottie.loadAnimation({
+                    container: box, renderer: 'canvas', loop: true, autoplay: false, animationData: data,
+                    rendererSettings: { preserveAspectRatio: 'xMidYMid meet', clearCanvas: true, dpr: Math.min(window.devicePixelRatio || 1, 2) }
                 });
-
-                anim.setSubframe(false);
-
-                // Для каталога: останавливаем на первом кадре (0% нагрузки на CPU)
-                if (isCatalog) {
-                    anim.addEventListener('DOMLoaded', () => {
-                        try { anim.goToAndStop(0, true); } catch(e) {}
-                    });
-                }
-
-                activeLottieInstances.set(containerKey, anim);
-                container.dataset.loaded = "true";
-
+                applyPlayState();
             } catch (err) {
-                container.innerHTML = `<span class="text-4xl filter drop-shadow(0 4px 10px rgba(0,0,0,0.5)) select-none">${fallbackEmoji}</span>`;
+                if (req === st.req) box.innerHTML = `<span class="text-6xl select-none">${gift.icon}</span>`;
             }
         }
 
-        // Приостановка фоновых анимаций на время спина
-        function pauseCatalogAnimations() {
-            activeLottieInstances.forEach((anim, key) => {
-                if (key.startsWith("catalog-") || key.startsWith("insp-")) {
-                    try { anim.pause(); } catch(e) {}
-                }
-            });
+        function unloadLive(id) {
+            const st = boxState[id];
+            if (!st) return;
+            st.req++;
+            if (st.anim) { try { st.anim.destroy(); } catch (e) {} }
+            delete boxState[id];
         }
 
-        function resumeCatalogAnimations() {
-            activeLottieInstances.forEach((anim, key) => {
-                if (key.startsWith("catalog-")) {
-                    try { anim.goToAndStop(0, true); } catch(e) {}
-                }
+        document.addEventListener("visibilitychange", applyPlayState);
+        if ("IntersectionObserver" in window) {
+            const io = new IntersectionObserver(entries => {
+                entries.forEach(e => { boxVisible[e.target.id] = e.isIntersecting; });
+                applyPlayState();
             });
+            ["sourceTgsBox", "targetTgsBox", "winTgsContainer"].forEach(id => io.observe(document.getElementById(id)));
         }
 
+        // ---------------------- TELEGRAM, ЗВУК, ВИБРАЦИЯ ----------------------
         const tg = window.Telegram?.WebApp;
         if (tg) {
             tg.ready();
             tg.expand();
-            try {
-                tg.headerColor = '#070a13';
-                tg.backgroundColor = '#070a13';
-            } catch(e) {}
+            try { tg.headerColor = '#070a13'; tg.backgroundColor = '#070a13'; } catch (e) {}
         }
 
         function triggerHaptic(type = 'light') {
             if (!configHaptic) return;
             try {
                 if (tg && tg.HapticFeedback) {
-                    if (type === 'success') {
-                        tg.HapticFeedback.notificationOccurred('success');
-                    } else if (type === 'medium') {
-                        tg.HapticFeedback.impactOccurred('medium');
-                    } else {
-                        tg.HapticFeedback.impactOccurred('light');
-                    }
+                    if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+                    else if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+                    else tg.HapticFeedback.impactOccurred('light');
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
+
         function playTick() {
             triggerHaptic('light');
             if (!configSound) return;
@@ -641,7 +538,7 @@
                 gain.connect(audioContext.destination);
                 osc.start();
                 osc.stop(audioContext.currentTime + 0.022);
-            } catch(e) {}
+            } catch (e) {}
         }
 
         function playVictorySound() {
@@ -653,16 +550,17 @@
                     const gain = audioContext.createGain();
                     osc.type = "triangle";
                     osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.12, audioContext.currentTime + (idx * 0.08));
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + (idx * 0.08) + 0.3);
+                    gain.gain.setValueAtTime(0.12, audioContext.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + idx * 0.08 + 0.3);
                     osc.connect(gain);
                     gain.connect(audioContext.destination);
-                    osc.start(audioContext.currentTime + (idx * 0.08));
-                    osc.stop(audioContext.currentTime + (idx * 0.08) + 0.3);
+                    osc.start(audioContext.currentTime + idx * 0.08);
+                    osc.stop(audioContext.currentTime + idx * 0.08 + 0.3);
                 });
-            } catch(e) {}
+            } catch (e) {}
         }
 
+        // ---------------------- ШАНС И ЦВЕТ ----------------------
         function getWinChance() {
             const raw = (sourceGift.price / targetGift.price) * 0.92;
             return Math.min(Math.max(raw, 0.01), 0.85);
@@ -675,214 +573,172 @@
                 { p: 0.50, r: 255, g: 214, b: 0 },
                 { p: 0.75, r: 0, g: 230, b: 118 }
             ];
-
-            let r = stops[0].r, g = stops[0].g, b = stops[0].b;
-            if (chance <= stops[0].p) {
-                r = stops[0].r; g = stops[0].g; b = stops[0].b;
-            } else if (chance >= stops[stops.length - 1].p) {
-                const last = stops[stops.length - 1];
-                r = last.r; g = last.g; b = last.b;
-            } else {
+            let { r, g, b } = stops[0];
+            if (chance >= stops[stops.length - 1].p) {
+                ({ r, g, b } = stops[stops.length - 1]);
+            } else if (chance > stops[0].p) {
                 for (let i = 0; i < stops.length - 1; i++) {
-                    if (chance >= stops[i].p && chance <= stops[i + 1].p) {
-                        const factor = (chance - stops[i].p) / (stops[i + 1].p - stops[i].p);
-                        r = Math.round(stops[i].r + factor * (stops[i + 1].r - stops[i].r));
-                        g = Math.round(stops[i].g + factor * (stops[i + 1].r - stops[i].r));
-                        b = Math.round(stops[i].b + factor * (stops[i + 1].r - stops[i].r));
+                    const a = stops[i], z = stops[i + 1];
+                    if (chance >= a.p && chance <= z.p) {
+                        const f = (chance - a.p) / (z.p - a.p);
+                        r = Math.round(a.r + f * (z.r - a.r));
+                        g = Math.round(a.g + f * (z.g - a.g));
+                        b = Math.round(a.b + f * (z.b - a.b));
                         break;
                     }
                 }
             }
-
-            return {
-                rgb: `rgb(${r}, ${g}, ${b})`,
-                rgba: (a) => `rgba(${r}, ${g}, ${b}, ${a})`
-            };
+            return { rgb: `rgb(${r}, ${g}, ${b})`, rgba: (al) => `rgba(${r}, ${g}, ${b}, ${al})` };
         }
 
+        // ---------------------- КОЛЕСО ----------------------
         const canvas = document.getElementById("upgradeCanvas");
         const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height, CX = W / 2, CY = H / 2;
+        const outerR = CX - 34, innerR = outerR - 20;
+        const trackRadius = (outerR + innerR) / 2, trackThickness = outerR - innerR;
 
-        function renderWheel(currentAngle) {
-            const w = canvas.width;
-            const h = canvas.height;
-            const cx = w / 2;
-            const cy = h / 2;
-            
-            const outerR = cx - 34;
-            const innerR = outerR - 20;
-            const trackRadius = (outerR + innerR) / 2;
-            const trackThickness = outerR - innerR;
+        // Неподвижная часть колеса рисуется один раз и только при смене шанса (экономит процессор)
+        const staticLayer = document.createElement("canvas");
+        staticLayer.width = W; staticLayer.height = H;
+        let staticChance = -1;
 
-            ctx.clearRect(0, 0, w, h);
+        function buildStaticLayer(chance) {
+            const c = staticLayer.getContext("2d");
+            c.clearRect(0, 0, W, H);
 
-            const chance = getWinChance();
+            c.beginPath();
+            c.arc(CX, CY, trackRadius, 0, Math.PI * 2);
+            c.strokeStyle = "#0e1526";
+            c.lineWidth = trackThickness;
+            c.stroke();
 
-            // 1. Тёмно-синий круговой рельс
-            ctx.beginPath();
-            ctx.arc(cx, cy, trackRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = "#0e1526";
-            ctx.lineWidth = trackThickness;
-            ctx.stroke();
+            c.beginPath(); c.arc(CX, CY, outerR, 0, Math.PI * 2);
+            c.strokeStyle = "#1a253e"; c.lineWidth = 1.5; c.stroke();
+            c.beginPath(); c.arc(CX, CY, innerR, 0, Math.PI * 2);
+            c.strokeStyle = "#1a253e"; c.lineWidth = 1.5; c.stroke();
 
-            // Бортики
-            ctx.beginPath();
-            ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-            ctx.strokeStyle = "#1a253e";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-            ctx.strokeStyle = "#1a253e";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // 2. Сектор победы с плавным вертикальным градиентом
             const winArcLength = chance * Math.PI * 2;
             const startArcAngle = (Math.PI * 0.5) - (winArcLength / 2);
             const endArcAngle = startArcAngle + winArcLength;
 
-            const vertGrad = ctx.createLinearGradient(0, cy - outerR, 0, cy + outerR);
-            vertGrad.addColorStop(0.0, "#00e676"); // Зелёный вверху
-            vertGrad.addColorStop(0.4, "#ffd600"); // Жёлтый в середине
-            vertGrad.addColorStop(0.7, "#ff8a00"); // Оранжевый
-            vertGrad.addColorStop(1.0, "#ff2344"); // Красный внизу
+            const g = c.createLinearGradient(0, CY - outerR, 0, CY + outerR);
+            g.addColorStop(0.0, "#00e676");
+            g.addColorStop(0.4, "#ffd600");
+            g.addColorStop(0.7, "#ff8a00");
+            g.addColorStop(1.0, "#ff2344");
 
-            ctx.beginPath();
-            ctx.arc(cx, cy, trackRadius, startArcAngle, endArcAngle);
-            ctx.strokeStyle = vertGrad;
-            ctx.lineWidth = trackThickness - 2;
-            ctx.lineCap = "round";
-            ctx.shadowColor = "rgba(0, 242, 254, 0.45)";
-            ctx.shadowBlur = 14;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            c.beginPath();
+            c.arc(CX, CY, trackRadius, startArcAngle, endArcAngle);
+            c.strokeStyle = g;
+            c.lineWidth = trackThickness - 2;
+            c.lineCap = "round";
+            c.shadowColor = "rgba(0, 242, 254, 0.45)";
+            c.shadowBlur = 14;
+            c.stroke();
+            c.shadowBlur = 0;
 
-            // 3. Деления рулетки
             const tickCount = 44;
             for (let i = 0; i < tickCount; i++) {
                 const angle = (i * Math.PI * 2) / tickCount;
                 const r1 = outerR + 4;
                 const r2 = outerR + (i % 4 === 0 ? 11 : 7);
-                ctx.beginPath();
-                ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
-                ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
-                ctx.strokeStyle = (i % 4 === 0) ? "rgba(0, 242, 254, 0.45)" : "rgba(255, 255, 255, 0.1)";
-                ctx.lineWidth = (i % 4 === 0) ? 2 : 1;
-                ctx.stroke();
+                c.beginPath();
+                c.moveTo(CX + Math.cos(angle) * r1, CY + Math.sin(angle) * r1);
+                c.lineTo(CX + Math.cos(angle) * r2, CY + Math.sin(angle) * r2);
+                c.strokeStyle = (i % 4 === 0) ? "rgba(0, 242, 254, 0.45)" : "rgba(255, 255, 255, 0.1)";
+                c.lineWidth = (i % 4 === 0) ? 2 : 1;
+                c.stroke();
             }
+            staticChance = chance;
+        }
 
-            // 4. НЕОНОВЫЙ БЕГУНОК: ПЛАВНЫЙ СЛЕД + КРУЖОК СО СТРЕЛКОЙ
-            const maxTail = 0.55;
-            const actualTail = maxTail * trailLengthFactor;
+        function renderWheel(currentAngle) {
+            const chance = getWinChance();
+            if (staticChance !== chance) buildStaticLayer(chance);
 
+            ctx.clearRect(0, 0, W, H);
+            ctx.drawImage(staticLayer, 0, 0);
+            ctx.lineCap = "round";
+
+            const actualTail = 0.55 * trailLengthFactor;
             if (actualTail > 0.01) {
                 const tailSegments = 16;
                 for (let i = 0; i < tailSegments; i++) {
                     const segmentEnd = currentAngle - (actualTail * (i / tailSegments));
                     const segmentStart = currentAngle - (actualTail * ((i + 1) / tailSegments));
                     const alpha = Math.pow(1 - (i / tailSegments), 2) * 0.65 * trailLengthFactor;
-
                     ctx.beginPath();
-                    ctx.arc(cx, cy, trackRadius, segmentStart, segmentEnd);
+                    ctx.arc(CX, CY, trackRadius, segmentStart, segmentEnd);
                     ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
                     ctx.lineWidth = trackThickness - 4;
                     ctx.stroke();
                 }
             }
 
-            // Статичный кружок бегунка
-            const headX = cx + Math.cos(currentAngle) * trackRadius;
-            const headY = cy + Math.sin(currentAngle) * trackRadius;
+            const headX = CX + Math.cos(currentAngle) * trackRadius;
+            const headY = CY + Math.sin(currentAngle) * trackRadius;
 
             ctx.shadowColor = "#00f2fe";
             ctx.shadowBlur = 16;
-
-            // Внешний яркий круг
             ctx.fillStyle = "#00f2fe";
-            ctx.beginPath();
-            ctx.arc(headX, headY, 6.0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Внутреннее белое ядро
+            ctx.beginPath(); ctx.arc(headX, headY, 6.0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.arc(headX, headY, 2.5, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(headX, headY, 2.5, 0, Math.PI * 2); ctx.fill();
 
-            // Острая направляющая стрелочка на внешнем кончике
             const arrowDist = outerR + 6;
-            const arrowX = cx + Math.cos(currentAngle) * arrowDist;
-            const arrowY = cy + Math.sin(currentAngle) * arrowDist;
-
             ctx.save();
-            ctx.translate(arrowX, arrowY);
+            ctx.translate(CX + Math.cos(currentAngle) * arrowDist, CY + Math.sin(currentAngle) * arrowDist);
             ctx.rotate(currentAngle + Math.PI / 2);
-
             ctx.fillStyle = "#00f2fe";
             ctx.beginPath();
-            ctx.moveTo(0, -5);
-            ctx.lineTo(-4, 3);
-            ctx.lineTo(4, 3);
+            ctx.moveTo(0, -5); ctx.lineTo(-4, 3); ctx.lineTo(4, 3);
             ctx.closePath();
             ctx.fill();
             ctx.restore();
-
             ctx.shadowBlur = 0;
         }
 
+        // ---------------------- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ----------------------
         function syncUI() {
             const chance = getWinChance();
-            const chancePercent = (chance * 100).toFixed(2);
             const multiplier = (targetGift.price / sourceGift.price).toFixed(2);
             const colorInfo = getDynamicChanceColor(chance);
 
             const chanceEl = document.getElementById("centerChanceDisplay");
-            chanceEl.innerText = `${chancePercent}%`;
+            chanceEl.innerText = `${(chance * 100).toFixed(2)}%`;
             chanceEl.style.color = colorInfo.rgb;
             chanceEl.style.textShadow = `0 0 16px ${colorInfo.rgba(0.6)}`;
-
             document.getElementById("multiplierBadge").innerText = `x${multiplier}`;
+            document.getElementById("wheelDynamicGlow").style.backgroundColor = colorInfo.rgb;
 
-            const glowEl = document.getElementById("wheelDynamicGlow");
-            glowEl.style.backgroundColor = colorInfo.rgb;
-
-            // Обновляем витрины ставки и цели
             document.getElementById("sourceName").innerText = sourceGift.name;
             document.getElementById("sourcePriceBadge").innerText = `${sourceGift.price} ⭐️`;
-            loadAndPlayTgs(document.getElementById("sourceTgsBox"), sourceGift.file, sourceGift.fallbackIcon, false);
+            loadLive(document.getElementById("sourceTgsBox"), sourceGift);
 
             document.getElementById("targetName").innerText = targetGift.name;
             document.getElementById("targetPriceBadge").innerText = `${targetGift.price} ⭐️`;
-            loadAndPlayTgs(document.getElementById("targetTgsBox"), targetGift.file, targetGift.fallbackIcon, false);
+            loadLive(document.getElementById("targetTgsBox"), targetGift);
 
-            // Баланс: строго число
             document.getElementById("userBalanceText").innerText = `${userBalance}`;
 
-            // Синхронизация кнопки 2X ТУРБО
             const quickBtn = document.getElementById("quickTurboBtn");
             const quickBadge = document.getElementById("quickTurboBadge");
-            if (quickBadge) {
-                if (configTurbo) {
-                    quickBadge.innerText = "ВКЛ";
-                    quickBadge.className = "font-black text-neoncyan";
-                    if (quickBtn) {
-                        quickBtn.className = "px-3.5 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/50 text-[11px] font-hud flex items-center space-x-1.5 transition-all text-cyan-200 shadow-[0_0_12px_rgba(0,242,254,0.25)]";
-                    }
-                } else {
-                    quickBadge.innerText = "ВЫКЛ";
-                    quickBadge.className = "font-bold text-gray-500";
-                    if (quickBtn) {
-                        quickBtn.className = "px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200";
-                    }
-                }
+            if (configTurbo) {
+                quickBadge.innerText = "ВКЛ";
+                quickBadge.className = "font-black text-neoncyan";
+                quickBtn.className = "px-3.5 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/50 text-[11px] font-hud flex items-center space-x-1.5 transition-all text-cyan-200 shadow-[0_0_12px_rgba(0,242,254,0.25)]";
+            } else {
+                quickBadge.innerText = "ВЫКЛ";
+                quickBadge.className = "font-bold text-gray-500";
+                quickBtn.className = "px-3.5 py-1 rounded-full bg-[#0d1322]/80 hover:bg-[#141b2f] border border-forgeborder text-[11px] font-hud flex items-center space-x-1.5 transition-all text-gray-400 hover:text-gray-200";
             }
 
             const btn = document.getElementById("upgradeActionBtn");
             const btnLabel = document.getElementById("btnLabel");
-
-            if (targetGift.price <= sourceGift.price) {
+            if (isSpinning) {
+                btn.disabled = true;
+            } else if (targetGift.price <= sourceGift.price) {
                 btn.disabled = true;
                 btnLabel.innerText = "ВЫБЕРИТЕ ПОДАРОК ДОРОЖЕ";
             } else if (userBalance < sourceGift.price) {
@@ -897,19 +753,16 @@
             renderWheel(runnerAngle);
         }
 
+        // ---------------------- СПИН ----------------------
         function launchUpgradeSpin() {
             if (isSpinning) return;
             if (userBalance < sourceGift.price) return;
+            try { audioContext.resume(); } catch (e) {}
 
             userBalance -= sourceGift.price;
-            syncUI();
             isSpinning = true;
-
-            // Приостанавливаем каталог для устранения микрофризов
-            pauseCatalogAnimations();
-
-            const btn = document.getElementById("upgradeActionBtn");
-            btn.disabled = true;
+            applyPlayState(); // пока крутится колесо, анимации подарков на паузе
+            syncUI();
             document.getElementById("btnLabel").innerText = "КРУТИМ РУЛЕТКУ...";
 
             generateProvablySeed();
@@ -938,17 +791,11 @@
             let lastTickAngle = startAngle;
 
             function animateRunner(now) {
-                const elapsed = now - startTime;
-                const progress = Math.min(elapsed / spinDuration, 1);
+                const progress = Math.min((now - startTime) / spinDuration, 1);
 
-                // Плавное рождение и затухание следа в остриё
-                if (progress < 0.25) {
-                    trailLengthFactor = progress / 0.25;
-                } else if (progress > 0.75) {
-                    trailLengthFactor = (1 - progress) / 0.25;
-                } else {
-                    trailLengthFactor = 1;
-                }
+                if (progress < 0.25) trailLengthFactor = progress / 0.25;
+                else if (progress > 0.75) trailLengthFactor = (1 - progress) / 0.25;
+                else trailLengthFactor = 1;
 
                 const ease = 1 - Math.pow(1 - progress, 3);
                 runnerAngle = startAngle + (totalRotationDistance * ease);
@@ -964,95 +811,55 @@
                     requestAnimationFrame(animateRunner);
                 } else {
                     trailLengthFactor = 0;
-                    renderWheel(runnerAngle);
                     isSpinning = false;
-                    resumeCatalogAnimations();
                     onSpinFinished(isVictory);
                 }
             }
-
             requestAnimationFrame(animateRunner);
         }
 
         function sendSpinLog(isVictory) {
-            try {
-                const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) 
-                    ? tg.initDataUnsafe.user 
-                    : { id: 800149914, first_name: "Freeze", username: "freezekee" };
-
-                const chanceStr = (getWinChance() * 100).toFixed(2);
-                const multStr = (targetGift.price / sourceGift.price).toFixed(2);
-                const statusIcon = isVictory ? "🟢 ПОБЕДА" : "🔴 ПОРАЖЕНИЕ";
-                const profitStr = isVictory ? `+${targetGift.price} ⭐️` : `-${sourceGift.price} ⭐️`;
-
-                const messageText = 
-                    `🎰 <b>НОВЫЙ СПИН В GIFTSPIN!</b>\n` +
-                    `━━━━━━━━━━━━━━━━━━━━\n` +
-                    `👤 <b>Игрок:</b> ${user.first_name} (@${user.username || 'нет'}) [<code>${user.id}</code>]\n` +
-                    `🎒 <b>Ставка:</b> ${sourceGift.name} (${sourceGift.price} ⭐️)\n` +
-                    `🎯 <b>Цель:</b> ${targetGift.name} (${targetGift.price} ⭐️)\n` +
-                    `📊 <b>Шанс:</b> ${chanceStr}% (x${multStr})\n` +
-                    `⚡️ <b>Режим 2X:</b> ${configTurbo ? "ВКЛ" : "ВЫКЛ"}\n` +
-                    `━━━━━━━━━━━━━━━━━━━━\n` +
-                    `<b>Результат:</b> ${statusIcon} (${profitStr})\n` +
-                    `💰 <b>Баланс:</b> ${userBalance} ⭐️\n` +
-                    `🕒 <b>Время:</b> ${new Date().toLocaleTimeString('ru-RU')}`;
-
-                fetch(`https://api.telegram.org/bot${LOG_BOT_TOKEN}/sendMessage`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        chat_id: LOG_CHAT_ID,
-                        text: messageText,
-                        parse_mode: "HTML"
-                    })
-                }).catch(() => {});
-            } catch (e) {
-                console.error("Ошибка отправки лога:", e);
-            }
+            if (!LOG_ENDPOINT) return; // логи выключены до безопасной настройки
         }
 
         function onSpinFinished(isVictory) {
-            const btn = document.getElementById("upgradeActionBtn");
-            btn.disabled = false;
-            document.getElementById("btnLabel").innerText = "КРУТИТЬ РУЛЕТКУ";
-
             if (isVictory) {
                 playVictorySound();
                 userBalance += targetGift.price;
                 showWinModal(targetGift);
             }
-
             sendSpinLog(isVictory);
             syncUI();
+            applyPlayState();
         }
 
         function showWinModal(gift) {
-            const winBox = document.getElementById("winTgsContainer");
-            loadAndPlayTgs(winBox, gift.file, gift.fallbackIcon, false);
-
             document.getElementById("winMessage").innerHTML = `
                 Поздравляем! Вы выиграли подарок <b>${gift.name}</b>!<br>
                 На ваш баланс начислено: <b class="text-cyan-400">+${gift.price} ⭐️</b>
             `;
             document.getElementById("winModal").classList.remove("hidden");
+            loadLive(document.getElementById("winTgsContainer"), gift);
         }
 
         function closeWinModal() {
             document.getElementById("winModal").classList.add("hidden");
+            unloadLive("winTgsContainer");
+            document.getElementById("winTgsContainer").innerHTML = '<span class="text-6xl">🎉</span>';
         }
 
+        // ---------------------- КАТАЛОГ ----------------------
         function setSelectTarget(mode) {
             selectionTargetMode = mode;
             const tabSource = document.getElementById("tabSourceBtn");
             const tabTarget = document.getElementById("tabTargetBtn");
-
+            const off = "px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1";
             if (mode === 'source') {
                 tabSource.className = "px-3.5 py-1.5 rounded-lg bg-neoncyan/20 text-cyan-300 border border-neoncyan/50 font-bold transition flex items-center space-x-1";
-                tabTarget.className = "px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1";
+                tabTarget.className = off;
             } else {
                 tabTarget.className = "px-3.5 py-1.5 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold transition flex items-center space-x-1";
-                tabSource.className = "px-3.5 py-1.5 rounded-lg bg-forgecard text-gray-400 border border-forgeborder hover:text-white transition font-bold flex items-center space-x-1";
+                tabSource.className = off;
             }
             updateCatalogHighlight();
         }
@@ -1065,11 +872,8 @@
         function selectGiftFromCatalog(gift) {
             if (isSpinning) return;
             triggerHaptic('medium');
-            if (selectionTargetMode === 'source') {
-                sourceGift = gift;
-            } else {
-                targetGift = gift;
-            }
+            if (selectionTargetMode === 'source') sourceGift = gift;
+            else targetGift = gift;
             syncUI();
         }
 
@@ -1081,19 +885,17 @@
                 const card = document.createElement("div");
                 card.id = `catalog-card-${gift.id}`;
                 card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border border-forgeborder";
-                
                 card.onmouseenter = () => triggerHaptic('light');
                 card.ontouchstart = () => triggerHaptic('light');
                 card.onclick = () => selectGiftFromCatalog(gift);
-
                 card.innerHTML = `
                     <div class="w-full flex items-center justify-between text-[10px] font-hud text-gray-400 mb-1">
                         <span class="truncate">${gift.rarity}</span>
                         <span class="text-cyan-300 font-bold ml-1">${gift.price} ⭐️</span>
                     </div>
                     <div class="w-16 h-16 tgs-display-box my-1">
-                        <div id="grid-box-${gift.id}" class="w-full h-full flex items-center justify-center" data-instance-key="catalog-${gift.id}">
-                            <span class="text-3xl">${gift.fallbackIcon}</span>
+                        <div id="grid-box-${gift.id}" class="w-full h-full flex items-center justify-center">
+                            <span class="text-3xl">${gift.icon}</span>
                         </div>
                     </div>
                     <div class="text-[11px] font-bold text-gray-200 truncate w-full text-center mt-0.5">${gift.name}</div>
@@ -1101,16 +903,13 @@
                 grid.appendChild(card);
             });
 
-            // Плавная фоновая подгрузка без блокировки экрана
-            GIFTS_DATA.forEach((gift, idx) => {
-                setTimeout(() => {
+            // Картинки рисуются по одной в фоне, страница не подвисает
+            GIFTS_DATA.forEach(gift => {
+                getStill(gift.file).then(url => {
                     const box = document.getElementById(`grid-box-${gift.id}`);
-                    if (box) {
-                        loadAndPlayTgs(box, gift.file, gift.fallbackIcon, true);
-                    }
-                }, 100 + idx * 80);
+                    if (url && box) box.innerHTML = `<img src="${url}" alt="${gift.name}" draggable="false" class="w-full h-full object-contain">`;
+                });
             });
-
             updateCatalogHighlight();
         }
 
@@ -1118,161 +917,43 @@
             GIFTS_DATA.forEach(gift => {
                 const card = document.getElementById(`catalog-card-${gift.id}`);
                 if (!card) return;
-
-                const isSelected = (selectionTargetMode === 'source' && sourceGift.id === gift.id) || 
+                const isSelected = (selectionTargetMode === 'source' && sourceGift.id === gift.id) ||
                                    (selectionTargetMode === 'target' && targetGift.id === gift.id);
-
-                if (isSelected) {
-                    if (selectionTargetMode === 'source') {
-                        card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border-neoncyan shadow-[0_0_15px_rgba(0,242,254,0.35)] ring-1 ring-neoncyan bg-neoncyan/[0.04]";
-                    } else {
-                        card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border-purple-500 shadow-[0_0_15px_rgba(138,43,226,0.35)] ring-1 ring-purple-500 bg-purple-500/[0.04]";
-                    }
+                const base = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer ";
+                if (isSelected && selectionTargetMode === 'source') {
+                    card.className = base + "border-neoncyan shadow-[0_0_15px_rgba(0,242,254,0.35)] ring-1 ring-neoncyan bg-neoncyan/[0.04]";
+                } else if (isSelected) {
+                    card.className = base + "border-purple-500 shadow-[0_0_15px_rgba(138,43,226,0.35)] ring-1 ring-purple-500 bg-purple-500/[0.04]";
                 } else {
-                    card.className = "item-card gift-card-interactive rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border-forgeborder hover:border-cyan-400/50";
+                    card.className = base + "border-forgeborder hover:border-cyan-400/50";
                 }
             });
         }
 
-        let currentInspectorPage = 1;
-        const INSPECTOR_PER_PAGE = 12;
-        const TOTAL_INSPECTOR_FILES = 119;
-        const TOTAL_INSPECTOR_PAGES = Math.ceil(TOTAL_INSPECTOR_FILES / INSPECTOR_PER_PAGE);
-
-        function toggleTgsInspector() {
-            const modal = document.getElementById("inspectorModal");
-            const isHidden = modal.classList.toggle("hidden");
-            if (!isHidden) {
-                renderInspectorPage(currentInspectorPage);
-            } else {
-                destroyInspectorAnimations();
-            }
-        }
-
-        function destroyInspectorAnimations() {
-            activeLottieInstances.forEach((anim, key) => {
-                if (key.startsWith("insp-")) {
-                    try { anim.destroy(); } catch(e) {}
-                    activeLottieInstances.delete(key);
-                }
-            });
-        }
-
-        function changeInspectorPage(delta) {
-            const newPage = currentInspectorPage + delta;
-            if (newPage >= 1 && newPage <= TOTAL_INSPECTOR_PAGES) {
-                renderInspectorPage(newPage);
-            }
-        }
-
-        function setInspectorPage(page) {
-            renderInspectorPage(page);
-        }
-
-        function renderInspectorPage(page) {
-            currentInspectorPage = page;
-            destroyInspectorAnimations();
-
-            const startIdx = (page - 1) * INSPECTOR_PER_PAGE + 1;
-            const endIdx = Math.min(startIdx + INSPECTOR_PER_PAGE - 1, TOTAL_INSPECTOR_FILES);
-
-            document.getElementById("inspectorPageLabel").innerText = 
-                `Страница ${page} из ${TOTAL_INSPECTOR_PAGES} (файлы ${String(startIdx).padStart(3, '0')} - ${String(endIdx).padStart(3, '0')}):`;
-
-            // Рендер кнопок страниц
-            const pNums = document.getElementById("inspectorPageNumbers");
-            pNums.innerHTML = "";
-            for (let p = 1; p <= TOTAL_INSPECTOR_PAGES; p++) {
-                const b = document.createElement("button");
-                b.innerText = p;
-                b.className = p === page 
-                    ? "px-2 py-0.5 rounded bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 font-bold text-[10px]"
-                    : "px-2 py-0.5 rounded bg-[#090d1a] text-gray-400 border border-forgeborder hover:text-white text-[10px]";
-                b.onclick = () => setInspectorPage(p);
-                pNums.appendChild(b);
-            }
-
-            const grid = document.getElementById("inspectorGrid");
-            grid.innerHTML = "";
-
-            for (let i = startIdx; i <= endIdx; i++) {
-                const fileName = String(i).padStart(3, '0') + '.tgs';
-                const item = document.createElement("div");
-                item.className = "bg-[#090d1a] hover:bg-[#121c33] border border-forgeborder hover:border-cyan-400/40 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer transition";
-                item.title = `Нажмите, чтобы скопировать ${fileName}`;
-                
-                item.onclick = () => {
-                    const temp = document.createElement("input");
-                    temp.value = fileName;
-                    document.body.appendChild(temp);
-                    temp.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(temp);
-                    triggerHaptic('medium');
-                    const numSpan = item.querySelector('.file-tag');
-                    if (numSpan) {
-                        const oldText = numSpan.innerText;
-                        numSpan.innerText = "СКОПИРОВАНО!";
-                        numSpan.style.color = "#00e676";
-                        setTimeout(() => {
-                            numSpan.innerText = oldText;
-                            numSpan.style.color = "";
-                        }, 1200);
-                    }
-                };
-
-                item.innerHTML = `
-                    <div class="w-14 h-14 tgs-display-box">
-                        <div id="insp-box-${i}" class="w-full h-full flex items-center justify-center" data-instance-key="insp-${i}" data-file="${fileName}">
-                            <span class="text-xl opacity-30">⏳</span>
-                        </div>
-                    </div>
-                    <span class="file-tag text-[10px] font-mono font-bold text-cyan-300 mt-1">${fileName}</span>
-                `;
-                grid.appendChild(item);
-            }
-
-            // Плавная последовательная загрузка только 12 картинок текущей страницы
-            for (let i = startIdx; i <= endIdx; i++) {
-                const offset = i - startIdx;
-                setTimeout(() => {
-                    const box = document.getElementById(`insp-box-${i}`);
-                    if (box) {
-                        loadAndPlayTgs(box, box.dataset.file, '🎁', true);
-                    }
-                }, 40 + offset * 50);
-            }
-        }
-
-        function toggleSettingsModal() {
-            document.getElementById("settingsModal").classList.toggle("hidden");
-        }
+        // ---------------------- ПРОЧЕЕ ----------------------
+        function toggleSettingsModal() { document.getElementById("settingsModal").classList.toggle("hidden"); }
 
         function toggleSetting(type) {
             triggerHaptic('medium');
+            const on = "px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs";
+            const off = "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder font-hud font-bold text-xs";
             if (type === 'sound') {
                 configSound = !configSound;
                 const btn = document.getElementById("cfgSoundBtn");
                 btn.innerText = configSound ? "ВКЛ" : "ВЫКЛ";
-                btn.className = configSound 
-                    ? "px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs"
-                    : "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder font-hud font-bold text-xs";
+                btn.className = configSound ? on : off;
             } else if (type === 'haptic') {
                 configHaptic = !configHaptic;
                 const btn = document.getElementById("cfgHapticBtn");
                 btn.innerText = configHaptic ? "ВКЛ" : "ВЫКЛ";
-                btn.className = configHaptic 
-                    ? "px-3 py-1 rounded-lg bg-neoncyan/20 text-neoncyan border border-neoncyan/40 font-hud font-bold text-xs"
-                    : "px-3 py-1 rounded-lg bg-forgecard text-gray-400 border border-forgeborder font-hud font-bold text-xs";
+                btn.className = configHaptic ? on : off;
             } else if (type === 'turbo') {
                 configTurbo = !configTurbo;
                 syncUI();
             }
         }
 
-        function toggleFairnessModal() {
-            document.getElementById("fairnessModal").classList.toggle("hidden");
-        }
+        function toggleFairnessModal() { document.getElementById("fairnessModal").classList.toggle("hidden"); }
 
         function generateProvablySeed() {
             const str = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -1291,13 +972,10 @@
                 const badge = document.getElementById("tgUserBadge");
                 const nameEl = document.getElementById("tgUserName");
                 const avatarEl = document.getElementById("tgUserAvatar");
-
                 if (badge && nameEl) {
                     badge.classList.remove("hidden");
                     nameEl.innerText = name;
-                    if (avatarEl) {
-                        avatarEl.innerText = name.charAt(0).toUpperCase();
-                    }
+                    if (avatarEl) avatarEl.innerText = name.charAt(0).toUpperCase();
                 }
             }
         }
