@@ -416,9 +416,9 @@
                 <div class="pt-2 border-t border-forgeborder/60">
                     <button onclick="toggleTgsInspector()" class="w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 rounded-xl font-hud text-xs font-bold transition flex items-center justify-center space-x-1.5">
                         <span>🔍</span>
-                        <span>ИНСПЕКТОР ФАЙЛОВ TGS</span>
+                        <span>ИНСПЕКТОР ФАЙЛОВ TGS (ВСЕ 120+)</span>
                     </button>
-                    <div class="text-[10px] text-gray-400 text-center mt-1">Показывает все файлы 001-050 для сверки номеров</div>
+                    <div class="text-[10px] text-gray-400 text-center mt-1">Показывает все файлы 001-125 с разбивкой по вкладкам</div>
                 </div>
             </div>
         </div>
@@ -430,8 +430,15 @@
             <span class="font-hud font-bold text-sm text-cyan-300">🔍 ВСЕ ФАЙЛЫ В ВАШЕМ РЕПОЗИТОРИИ</span>
             <button onclick="toggleTgsInspector()" class="text-gray-400 hover:text-white font-bold text-base px-2">✕</button>
         </div>
-        <div class="text-[11px] text-gray-400 my-2 font-hud">
-            Кликните по номеру, чтобы скопировать его. Найдите файлы Мишки, Розы, Торта и напишите мне их номера:
+        <div class="text-[11px] text-gray-400 my-2 font-hud flex items-center justify-between">
+            <span>Выберите диапазон файлов (всего 125):</span>
+            <span class="text-cyan-400 text-[10px]">Клик копирует имя</span>
+        </div>
+        <!-- Вкладки диапазонов для плавной работы без зависаний браузера -->
+        <div class="flex items-center space-x-1.5 mb-2 font-hud text-xs">
+            <button id="inspRange1" onclick="switchInspectorRange(1, 40)" class="flex-1 py-1 rounded bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold text-[11px] transition">001 - 040</button>
+            <button id="inspRange2" onclick="switchInspectorRange(41, 80)" class="flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition">041 - 080</button>
+            <button id="inspRange3" onclick="switchInspectorRange(81, 125)" class="flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition">081 - 125</button>
         </div>
         <div id="inspectorGrid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 pr-1">
             <!-- Заполняется динамически -->
@@ -475,26 +482,23 @@
 
     <script>
         // --------------------------------------------------------------------------
-        // СПИСОК ПОДАРКОВ С РЕАЛЬНЫМИ НАЗВАНИЯМИ ИЗ СТИКЕРПАКА DMJGiftStars
+        // СПИСОК ПОДАРКОВ С ТОЧНЫМИ ФАЙЛАМИ ИЗ СТИКЕРПАКА DMJGiftStars
         // --------------------------------------------------------------------------
         const GIFTS_DATA = [
             { id: 1, name: "Глинтвейн", price: 15, file: "001.tgs", fallbackIcon: "🍷", rarity: "Обычный" },
-            { id: 2, name: "Замок Любви", price: 500, file: "002.tgs", fallbackIcon: "🔒", rarity: "Коллекционный" },
-            { id: 3, name: "Шкатулка", price: 250, file: "003.tgs", fallbackIcon: "💎", rarity: "Легендарный" },
             { id: 4, name: "Шляпа Ведьмы", price: 15, file: "004.tgs", fallbackIcon: "🧙‍♀️", rarity: "Обычный" },
-            // Файл 005.tgs исключен — там рекламный логотип DMJ_Stickers
+            { id: 15, name: "Роза", price: 25, file: "015.tgs", fallbackIcon: "🌹", rarity: "Обычный" },
             { id: 6, name: "Тамагочи", price: 50, file: "006.tgs", fallbackIcon: "📟", rarity: "Редкий" },
-            { id: 7, name: "Подарок #7", price: 50, file: "007.tgs", fallbackIcon: "🎁", rarity: "Редкий" },
-            { id: 8, name: "Подарок #8", price: 100, file: "008.tgs", fallbackIcon: "🏆", rarity: "Легендарный" },
-            { id: 9, name: "Подарок #9", price: 100, file: "009.tgs", fallbackIcon: "💍", rarity: "Легендарный" },
-            { id: 10, name: "Подарок #10", price: 100, file: "010.tgs", fallbackIcon: "💎", rarity: "Легендарный" },
-            { id: 11, name: "Подарок #11", price: 50, file: "011.tgs", fallbackIcon: "🍾", rarity: "Редкий" },
-            { id: 12, name: "Подарок #12", price: 500, file: "012.tgs", fallbackIcon: "🔥", rarity: "Коллекционный" }
+            { id: 13, name: "Мишка", price: 50, file: "013.tgs", fallbackIcon: "🧸", rarity: "Редкий" },
+            { id: 36, name: "Подарок", price: 100, file: "036.tgs", fallbackIcon: "🎁", rarity: "Легендарный" },
+            { id: 37, name: "Кольцо", price: 100, file: "037.tgs", fallbackIcon: "💍", rarity: "Легендарный" },
+            { id: 3, name: "Шкатулка", price: 250, file: "003.tgs", fallbackIcon: "💎", rarity: "Эпический" },
+            { id: 2, name: "Замок Любви", price: 500, file: "002.tgs", fallbackIcon: "🔒", rarity: "Коллекционный" }
         ];
 
         let userBalance = 650;
-        let sourceGift = GIFTS_DATA[0]; // Глинтвейн (15 ⭐️)
-        let targetGift = GIFTS_DATA[1]; // Замок Любви (500 ⭐️)
+        let sourceGift = GIFTS_DATA.find(g => g.file === "013.tgs") || GIFTS_DATA[0]; // Мишка (50 ⭐️)
+        let targetGift = GIFTS_DATA.find(g => g.file === "037.tgs") || GIFTS_DATA[6]; // Кольцо (100 ⭐️)
         let selectionTargetMode = 'target'; // 'source' или 'target'
 
         let isSpinning = false;
@@ -1095,28 +1099,74 @@
             const modal = document.getElementById("inspectorModal");
             const isHidden = modal.classList.toggle("hidden");
             if (!isHidden) {
-                renderInspectorGrid();
+                switchInspectorRange(currentInspectorStart, currentInspectorEnd);
             }
         }
 
-        function renderInspectorGrid() {
-            const grid = document.getElementById("inspectorGrid");
-            if (grid.children.length > 0) return; // Уже отрисовано
+        let currentInspectorStart = 1;
+        let currentInspectorEnd = 40;
 
-            // Генерируем карточки для первых 45 файлов
-            for (let i = 1; i <= 45; i++) {
-                if (i === 5) continue; // Пропускаем баннер DMJ
+        function switchInspectorRange(start, end) {
+            currentInspectorStart = start;
+            currentInspectorEnd = end;
+
+            // Обновляем подсветку кнопок диапазона
+            [
+                { id: 'inspRange1', s: 1 },
+                { id: 'inspRange2', s: 41 },
+                { id: 'inspRange3', s: 81 }
+            ].forEach(tab => {
+                const btn = document.getElementById(tab.id);
+                if (btn) {
+                    if (tab.s === start) {
+                        btn.className = "flex-1 py-1 rounded bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold text-[11px] transition";
+                    } else {
+                        btn.className = "flex-1 py-1 rounded bg-[#0e1628] text-gray-400 border border-forgeborder font-bold text-[11px] hover:text-white transition";
+                    }
+                }
+            });
+
+            renderInspectorGrid(start, end);
+        }
+
+        function renderInspectorGrid(start, end) {
+            const grid = document.getElementById("inspectorGrid");
+            grid.innerHTML = "";
+
+            for (let i = start; i <= end; i++) {
+                if (i === 5) continue; // Пропускаем рекламный баннер DMJ
                 const fileName = String(i).padStart(3, '0') + '.tgs';
                 const item = document.createElement("div");
-                item.className = "bg-[#090d1a] border border-forgeborder rounded-xl p-2 flex flex-col items-center justify-between";
+                item.className = "bg-[#090d1a] hover:bg-[#121c33] border border-forgeborder hover:border-cyan-400/40 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer transition";
+                item.title = `Нажмите, чтобы скопировать ${fileName}`;
+                item.onclick = () => {
+                    const temp = document.createElement("input");
+                    temp.value = fileName;
+                    document.body.appendChild(temp);
+                    temp.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(temp);
+                    triggerHaptic('medium');
+                    const numSpan = item.querySelector('.file-tag');
+                    if (numSpan) {
+                        const oldText = numSpan.innerText;
+                        numSpan.innerText = "СКОПИРОВАНО!";
+                        numSpan.style.color = "#00e676";
+                        setTimeout(() => {
+                            numSpan.innerText = oldText;
+                            numSpan.style.color = "";
+                        }, 1200);
+                    }
+                };
+
                 item.innerHTML = `
                     <div class="w-14 h-14 flex items-center justify-center tgs-player-box inspector-tgs-box" data-file="${fileName}"></div>
-                    <span class="text-[10px] font-mono font-bold text-cyan-300 mt-1">${fileName}</span>
+                    <span class="file-tag text-[10px] font-mono font-bold text-cyan-300 mt-1">${fileName}</span>
                 `;
                 grid.appendChild(item);
             }
 
-            document.querySelectorAll(".inspector-tgs-box").forEach(el => {
+            grid.querySelectorAll(".inspector-tgs-box").forEach(el => {
                 loadAndPlayTgs(el, el.dataset.file, '🎁');
             });
         }
