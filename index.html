@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Pako (Декомпрессор GZip для чтения формата .tgs) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <!-- Lottie Web (Официальный плеер векторных анимаций Telegram) -->
+    <!-- Lottie Web (Официальный плеер анимаций Telegram) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 
     <script>
@@ -115,31 +115,20 @@
             transform: scale(0.96);
         }
 
-        /* НАДЁЖНАЯ МАСКА ОБРЕЗКИ ЦЕННИКА И ФЛАЖКА LIMITED */
-        .tgs-crop-box {
+        /* ЧИСТЫЙ КОНТЕЙНЕР АНИМАЦИИ (ПОДАРКИ НЕ РЕЖУТСЯ) */
+        .tgs-display-box {
             position: relative;
-            overflow: hidden !important;
-            border-radius: 14px;
-            contain: paint;
-        }
-        .tgs-inner-anim {
-            position: absolute;
-            width: 180% !important;
-            height: 180% !important;
-            left: 50%;
-            top: 45%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: visible;
         }
-        .tgs-inner-anim svg {
-            width: 100% !important;
-            height: 100% !important;
+        .tgs-display-box svg, .tgs-display-box canvas {
+            max-width: 100%;
+            max-height: 100%;
             display: block;
             margin: auto;
-            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
         }
 
         ::-webkit-scrollbar {
@@ -241,8 +230,8 @@
                     </div>
 
                     <div id="sourceDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
-                        <div class="w-28 h-28 tgs-crop-box mb-1">
-                            <div id="sourceTgsBox" class="tgs-inner-anim">
+                        <div class="w-28 h-28 tgs-display-box mb-1">
+                            <div id="sourceTgsBox" class="w-full h-full flex items-center justify-center">
                                 <span class="text-6xl animate-pulse">🧸</span>
                             </div>
                         </div>
@@ -257,6 +246,7 @@
                 </div>
             </div>
 
+            <!-- ВИТРИНА ЦЕНТРА: РУЛЕТКА -->
             <div class="md:col-span-4 order-1 md:order-2 flex flex-col items-center justify-center py-2">
                 
                 <div class="relative w-[300px] h-[300px] sm:w-[330px] sm:h-[330px] flex items-center justify-center">
@@ -297,6 +287,7 @@
                 </div>
             </div>
 
+            <!-- ВИТРИНА 2: ЦЕЛЬ (СПРАВА) -->
             <div class="md:col-span-4 order-3">
                 <div class="item-card rounded-2xl p-4 flex flex-col items-center justify-between min-h-[280px] border border-forgeborder relative">
                     <div class="w-full flex items-center justify-between text-[11px] font-hud text-gray-400 pb-2 border-b border-forgeborder/60">
@@ -308,8 +299,8 @@
                     </div>
 
                     <div id="targetDisplay" class="flex flex-col items-center justify-center my-2 relative z-10 text-center w-full">
-                        <div class="w-28 h-28 tgs-crop-box mb-1">
-                            <div id="targetTgsBox" class="tgs-inner-anim">
+                        <div class="w-28 h-28 tgs-display-box mb-1">
+                            <div id="targetTgsBox" class="w-full h-full flex items-center justify-center">
                                 <span class="text-6xl animate-pulse">💍</span>
                             </div>
                         </div>
@@ -441,8 +432,8 @@
         <div class="bg-[#0e1628] border-2 border-neongreen/60 rounded-2xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
             <div class="absolute -top-12 inset-x-0 h-32 bg-neongreen/20 blur-3xl pointer-events-none"></div>
 
-            <div class="w-24 h-24 tgs-crop-box mb-2">
-                <div id="winTgsContainer" class="tgs-inner-anim">
+            <div class="w-24 h-24 tgs-display-box mb-2">
+                <div id="winTgsContainer" class="w-full h-full flex items-center justify-center">
                     <span class="text-6xl">🎉</span>
                 </div>
             </div>
@@ -530,7 +521,7 @@
             return animationJson;
         }
 
-        async function loadAndPlayTgs(container, fileName, fallbackEmoji) {
+        async function loadAndPlayTgs(container, fileName, fallbackEmoji, isCatalog = false) {
             if (!container) return;
 
             if (container.dataset.activeFile === fileName && container.dataset.loaded === "true") {
@@ -553,20 +544,30 @@
                 const animationJson = await fetchAndParseTgs(fileName);
                 container.innerHTML = "";
 
+                // В каталоге используем аппаратный Canvas renderer (в 5 раз легче для GPU/CPU)
                 const anim = lottie.loadAnimation({
                     container: container,
-                    renderer: 'svg',
-                    loop: true,
+                    renderer: isCatalog ? 'canvas' : 'svg',
+                    loop: !isCatalog,
                     autoplay: true,
                     animationData: animationJson,
                     rendererSettings: {
                         preserveAspectRatio: 'xMidYMid meet',
-                        progressiveLoad: true
+                        clearCanvas: true
                     }
                 });
 
                 // Снижаем нагрузку на CPU
                 anim.setSubframe(false);
+
+                // Для каталога: проигрываем первые кадры и ставим на паузу для экономии 90% ресурсов
+                if (isCatalog) {
+                    anim.addEventListener('DOMLoaded', () => {
+                        setTimeout(() => {
+                            try { anim.goToAndStop(15, true); } catch(e) {}
+                        }, 600);
+                    });
+                }
 
                 activeLottieInstances.set(containerKey, anim);
                 container.dataset.loaded = "true";
@@ -845,11 +846,11 @@
             // Обновляем витрины ставки и цели
             document.getElementById("sourceName").innerText = sourceGift.name;
             document.getElementById("sourcePriceBadge").innerText = `${sourceGift.price} ⭐️`;
-            loadAndPlayTgs(document.getElementById("sourceTgsBox"), sourceGift.file, sourceGift.fallbackIcon);
+            loadAndPlayTgs(document.getElementById("sourceTgsBox"), sourceGift.file, sourceGift.fallbackIcon, false);
 
             document.getElementById("targetName").innerText = targetGift.name;
             document.getElementById("targetPriceBadge").innerText = `${targetGift.price} ⭐️`;
-            loadAndPlayTgs(document.getElementById("targetTgsBox"), targetGift.file, targetGift.fallbackIcon);
+            loadAndPlayTgs(document.getElementById("targetTgsBox"), targetGift.file, targetGift.fallbackIcon, false);
 
             // Баланс: строго число
             document.getElementById("userBalanceText").innerText = `${userBalance}`;
@@ -1023,7 +1024,7 @@
 
         function showWinModal(gift) {
             const winBox = document.getElementById("winTgsContainer");
-            loadAndPlayTgs(winBox, gift.file, gift.fallbackIcon);
+            loadAndPlayTgs(winBox, gift.file, gift.fallbackIcon, false);
 
             document.getElementById("winMessage").innerHTML = `
                 Поздравляем! Вы выиграли подарок <b>${gift.name}</b>!<br>
@@ -1081,14 +1082,14 @@
                 card.ontouchstart = () => triggerHaptic('light');
                 card.onclick = () => selectGiftFromCatalog(gift);
 
-                // Верх: редкость и цена. Центр: маска обрезки без ценников на картинке!
+                // Верх: редкость и цена. Центр: гармоничные пропорции подарка
                 card.innerHTML = `
                     <div class="w-full flex items-center justify-between text-[10px] font-hud text-gray-400 mb-1">
                         <span class="truncate">${gift.rarity}</span>
                         <span class="text-cyan-300 font-bold ml-1">${gift.price} ⭐️</span>
                     </div>
-                    <div class="w-16 h-16 tgs-crop-box my-1">
-                        <div id="grid-box-${gift.id}" class="tgs-inner-anim" data-instance-key="catalog-${gift.id}">
+                    <div class="w-16 h-16 tgs-display-box my-1">
+                        <div id="grid-box-${gift.id}" class="w-full h-full flex items-center justify-center" data-instance-key="catalog-${gift.id}">
                             <span class="text-3xl">${gift.fallbackIcon}</span>
                         </div>
                     </div>
@@ -1102,9 +1103,9 @@
                 setTimeout(() => {
                     const box = document.getElementById(`grid-box-${gift.id}`);
                     if (box) {
-                        loadAndPlayTgs(box, gift.file, gift.fallbackIcon);
+                        loadAndPlayTgs(box, gift.file, gift.fallbackIcon, true);
                     }
-                }, 100 + idx * 80);
+                }, 80 + idx * 60);
             });
 
             updateCatalogHighlight();
@@ -1195,8 +1196,8 @@
                 };
 
                 item.innerHTML = `
-                    <div class="w-14 h-14 tgs-crop-box">
-                        <div class="tgs-inner-anim inspector-tgs-box" data-file="${fileName}"></div>
+                    <div class="w-14 h-14 tgs-display-box">
+                        <div class="w-full h-full inspector-tgs-box flex items-center justify-center" data-file="${fileName}"></div>
                     </div>
                     <span class="file-tag text-[10px] font-mono font-bold text-cyan-300 mt-1">${fileName}</span>
                 `;
@@ -1205,7 +1206,7 @@
 
             grid.querySelectorAll(".inspector-tgs-box").forEach((el, idx) => {
                 setTimeout(() => {
-                    loadAndPlayTgs(el, el.dataset.file, '🎁');
+                    loadAndPlayTgs(el, el.dataset.file, '🎁', true);
                 }, idx * 40);
             });
         }
