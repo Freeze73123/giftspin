@@ -166,9 +166,9 @@
                     <span class="text-sm select-none">⭐️</span>
                     <div class="flex flex-col">
                         <span class="text-[9px] text-gray-400 font-hud leading-none">БАЛАНС</span>
-                        <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">650</span>
+                        <span id="userBalanceText" class="text-xs font-hud font-bold text-cyan-300 leading-tight">—</span>
                     </div>
-                    <button onclick="addBalance(250)" title="Пополнить баланс" class="ml-1 w-5 h-5 rounded-md bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">+</button>
+                    <button id="topUpBtn" onclick="topUp()" title="Пополнить баланс" class="ml-1 w-5 h-5 rounded-md bg-neoncyan/15 hover:bg-neoncyan/25 text-neoncyan border border-neoncyan/30 flex items-center justify-center font-bold text-xs transition">+</button>
                 </div>
 
                 <div id="tgUserBadge" class="hidden sm:flex items-center space-x-1.5 bg-[#0e1526] border border-forgeborder rounded-xl px-2.5 py-1.5 text-xs font-hud text-gray-300">
@@ -293,6 +293,7 @@
             <div class="flex items-center space-x-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-neoncyan"></span>
                 <span>SHA-256 PROVABLY FAIR VERIFIED (v1.0)</span>
+                <span class="text-gray-600">· сборка 4</span>
             </div>
             <button onclick="toggleFairnessModal()" class="hover:text-neoncyan underline">Проверить честность спина</button>
         </div>
@@ -355,17 +356,21 @@
 
     <!-- PROVABLY FAIR -->
     <div id="fairnessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud">
+        <div class="bg-[#0e1628] border border-forgeborder rounded-2xl w-full max-w-sm p-5 font-hud max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-2 border-b border-forgeborder">
                 <span class="font-bold text-sm text-neoncyan">🛡 СИСТЕМА PROVABLY FAIR</span>
                 <button onclick="toggleFairnessModal()" class="text-gray-400 hover:text-white font-bold">✕</button>
             </div>
             <p class="text-xs text-gray-300 mt-2.5 leading-relaxed font-sans">
-                Угол остановки бегунка рассчитывается криптографически до начала вращения. Результат защищён хэшем SHA-256 и не может быть подделан.
+                Результат каждого спина считается на сервере из секретного зерна. Его хэш SHA-256 вы видите ДО спина, а после спина зерно раскрывается, и броском можно проверить, что он не подменён.
             </p>
             <div class="mt-3 bg-black/50 border border-forgeborder p-2.5 rounded-lg text-[10px] text-gray-400 break-all font-mono">
-                <b>Seed раунда:</b><br>
-                <code class="text-cyan-300" id="roundHashDisplay">4c1a8d05e26b1a77e8...</code>
+                <b>Хэш зерна сервера (следующий спин):</b><br>
+                <code class="text-cyan-300" id="roundHashDisplay">—</code>
+            </div>
+            <div id="lastRoundBox" class="hidden mt-2 bg-black/50 border border-forgeborder p-2.5 rounded-lg text-[10px] text-gray-400 break-all font-mono">
+                <b>Прошлый спин:</b>
+                <div id="lastRoundInfo" class="whitespace-pre-wrap mt-1 text-gray-300"></div>
             </div>
         </div>
     </div>
@@ -389,7 +394,12 @@
         ];
         GIFTS_DATA.forEach(g => { g.file = `gifts/${g.key}.tgs`; });
 
-        let userBalance = 650;
+        let userBalance = 0;
+        let sessionReady = false;
+        let currentSeedHash = "";
+        let tilesThrottled = false;
+        let uiMsg = "";
+        let uiMsgUntil = 0;
         let sourceGift = GIFTS_DATA[1]; // Мишка
         let targetGift = GIFTS_DATA[5]; // Торт
         let selectionTargetMode = 'target';
@@ -403,9 +413,8 @@
         let configTurbo = false;
         let configCatalogAnim = true;
 
-        // Логирование в канал временно выключено: секретный ключ бота нельзя хранить в открытом коде.
-        // Вернём логи безопасным способом на шаге про безопасность.
-        const LOG_ENDPOINT = "";
+        // Адрес сервера (Cloudflare Worker). Баланс, бросок рулетки и логи живут там.
+        const API_URL = "https://giftspin-api.vovan73ulyanovsk.workers.dev";
 
         // ---------------------- ЗАГРУЗКА И ПОКАЗ АНИМАЦИЙ ----------------------
         const tgsJsonCache = new Map();
@@ -463,7 +472,7 @@
         const boxVisible = {}; // id блока -> виден ли на экране
 
         function shouldPlay(id) {
-            return !document.hidden && !isSpinning && boxVisible[id] !== false;
+            return !document.hidden && boxVisible[id] !== false;
         }
 
         function applyPlayState() {
@@ -474,7 +483,7 @@
             }
             tileLive.forEach(rec => {
                 if (!rec.anim) return;
-                try { (!document.hidden && !isSpinning) ? rec.anim.play() : rec.anim.pause(); } catch (e) {}
+                try { (!document.hidden && !tilesThrottled) ? rec.anim.play() : rec.anim.pause(); } catch (e) {}
             });
         }
 
@@ -794,7 +803,7 @@
             document.getElementById("targetPriceBadge").innerText = `${targetGift.price} ⭐️`;
             loadLive(document.getElementById("targetTgsBox"), targetGift);
 
-            document.getElementById("userBalanceText").innerText = `${userBalance}`;
+            document.getElementById("userBalanceText").innerText = sessionReady ? `${userBalance}` : "—";
 
             const quickBtn = document.getElementById("quickTurboBtn");
             const quickBadge = document.getElementById("quickTurboBadge");
@@ -810,8 +819,18 @@
 
             const btn = document.getElementById("upgradeActionBtn");
             const btnLabel = document.getElementById("btnLabel");
-            if (isSpinning) {
+            const hasTg = !!(tg && tg.initData);
+            if (uiMsg && Date.now() < uiMsgUntil) {
                 btn.disabled = true;
+                btnLabel.innerText = uiMsg;
+            } else if (isSpinning) {
+                btn.disabled = true;
+            } else if (!hasTg) {
+                btn.disabled = true;
+                btnLabel.innerText = "ОТКРОЙТЕ В TELEGRAM";
+            } else if (!sessionReady) {
+                btn.disabled = false;
+                btnLabel.innerText = "ПОДКЛЮЧИТЬСЯ К СЕРВЕРУ";
             } else if (targetGift.price <= sourceGift.price) {
                 btn.disabled = true;
                 btnLabel.innerText = "ВЫБЕРИТЕ ПОДАРОК ДОРОЖЕ";
@@ -827,34 +846,136 @@
             renderWheel(runnerAngle);
         }
 
+        // ---------------------- СЕРВЕР ----------------------
+        function showMsg(text, ms = 2500) {
+            uiMsg = text;
+            uiMsgUntil = Date.now() + ms;
+            syncUI();
+            setTimeout(() => { if (Date.now() >= uiMsgUntil) { uiMsg = ""; syncUI(); } }, ms + 50);
+        }
+
+        async function api(path, body) {
+            const res = await fetch(API_URL + path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "tma " + tg.initData },
+                body: JSON.stringify(body || {})
+            });
+            let data = {};
+            try { data = await res.json(); } catch (e) {}
+            if (!res.ok) {
+                const err = new Error(data.error || ("http_" + res.status));
+                err.code = data.error || ("http_" + res.status);
+                err.data = data;
+                throw err;
+            }
+            return data;
+        }
+
+        function errorText(e) {
+            const c = e && e.code;
+            if (c === "insufficient_funds") return "НЕДОСТАТОЧНО ЗВЁЗД";
+            if (c === "busy" || c === "topup_refused") return "СЛИШКОМ ЧАСТО, ПОДОЖДИТЕ";
+            if (c === "topup_disabled") return "ПОПОЛНЕНИЕ ВЫКЛЮЧЕНО";
+            if (c === "bad_auth" || c === "no_auth") return "ПЕРЕЗАПУСТИТЕ ПРИЛОЖЕНИЕ";
+            if (!c || String(c).startsWith("http_")) return "НЕТ СВЯЗИ С СЕРВЕРОМ";
+            return "ОШИБКА СЕРВЕРА";
+        }
+
+        async function initSession() {
+            if (!tg || !tg.initData) { sessionReady = false; syncUI(); return; }
+            try {
+                const me = await api("/api/me");
+                userBalance = me.balance;
+                currentSeedHash = me.seedHash;
+                sessionReady = true;
+                document.getElementById("roundHashDisplay").innerText = currentSeedHash;
+                if (!me.testMode) document.getElementById("topUpBtn").classList.add("hidden");
+                syncUI();
+            } catch (e) {
+                sessionReady = false;
+                showMsg(errorText(e), 4000);
+            }
+        }
+
+        async function topUp() {
+            if (!sessionReady || isSpinning) return;
+            try {
+                const r = await api("/api/topup");
+                userBalance = r.balance;
+                triggerHaptic('medium');
+                syncUI();
+            } catch (e) {
+                if (e.data && typeof e.data.balance === "number") userBalance = e.data.balance;
+                showMsg(errorText(e));
+            }
+        }
+
+        function makeClientSeed() {
+            return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
+        }
+
+        // Проверка раунда в браузере: хэш зерна совпадает с показанным до спина, бросок пересчитывается
+        async function verifyRound(r, prevHash) {
+            try {
+                const enc = new TextEncoder();
+                const hex = (buf) => Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
+                const hashOk = hex(await crypto.subtle.digest("SHA-256", enc.encode(r.serverSeed))) === prevHash;
+                const key = await crypto.subtle.importKey("raw", enc.encode(r.serverSeed), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+                const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(`${r.clientSeed}:${r.nonce}`)));
+                let n = 0;
+                for (let i = 0; i < 6; i++) n = n * 256 + sig[i];
+                const roll = n / 2 ** 48;
+                const rollOk = Math.abs(roll - r.roll) < 1e-9 && ((roll < r.chance) === r.win);
+                return hashOk && rollOk;
+            } catch (e) { return null; }
+        }
+
+        async function showLastRound(r, prevHash) {
+            const ok = await verifyRound(r, prevHash);
+            document.getElementById("lastRoundBox").classList.remove("hidden");
+            document.getElementById("lastRoundInfo").textContent =
+                `Зерно сервера: ${r.serverSeed}\nЗерно игрока: ${r.clientSeed}\nРаунд №${r.nonce}\n` +
+                `Бросок: ${r.roll.toFixed(6)} при шансе ${(r.chance * 100).toFixed(2)}% (${r.win ? "победа" : "поражение"})\n` +
+                `Проверка в вашем браузере: ${ok === true ? "✓ всё совпадает" : ok === false ? "✗ НЕ СОВПАДАЕТ" : "не удалось"}`;
+        }
+
         // ---------------------- СПИН ----------------------
-        function launchUpgradeSpin() {
+        async function launchUpgradeSpin() {
             if (isSpinning) return;
-            if (userBalance < sourceGift.price) return;
+            if (!sessionReady) { await initSession(); return; }
+            if (targetGift.price <= sourceGift.price || userBalance < sourceGift.price) return;
             try { audioContext.resume(); } catch (e) {}
 
-            userBalance -= sourceGift.price;
             isSpinning = true;
-            applyPlayState(); // пока крутится колесо, анимации подарков на паузе
-            syncUI();
+            document.getElementById("upgradeActionBtn").disabled = true;
             document.getElementById("btnLabel").innerText = "КРУТИМ РУЛЕТКУ...";
 
-            generateProvablySeed();
+            let r;
+            try {
+                r = await api("/api/spin", {
+                    source: sourceGift.key, target: targetGift.key,
+                    clientSeed: makeClientSeed(), turbo: configTurbo
+                });
+            } catch (e) {
+                isSpinning = false;
+                if (e.data && typeof e.data.balance === "number") userBalance = e.data.balance;
+                showMsg(errorText(e));
+                return;
+            }
 
+            const prevHash = currentSeedHash;
+            userBalance = r.balance - r.payout; // ставка уже списана, выигрыш покажем после анимации
+            syncUI();
+
+            // Сервер уже решил исход. Здесь только рисуем остановку бегунка в нужной дуге.
             const chance = getWinChance();
-            const isVictory = Math.random() < chance;
-
             const winArcLength = chance * Math.PI * 2;
             const startArc = (Math.PI * 0.5) - (winArcLength / 2);
             const endArc = startArc + winArcLength;
-
-            let targetStopAngle;
-            if (isVictory) {
-                targetStopAngle = startArc + (Math.random() * (winArcLength * 0.8) + (winArcLength * 0.1));
-            } else {
-                const loseArcLength = (Math.PI * 2) - winArcLength;
-                targetStopAngle = endArc + (Math.random() * (loseArcLength * 0.8) + (loseArcLength * 0.1));
-            }
+            const frac = 0.1 + 0.8 * r.pos;
+            const targetStopAngle = r.win
+                ? startArc + winArcLength * frac
+                : endArc + ((Math.PI * 2) - winArcLength) * frac;
 
             const fullSpins = (configTurbo ? 4 : 7) + Math.floor(Math.random() * 2);
             const startAngle = runnerAngle;
@@ -863,8 +984,19 @@
             const spinDuration = configTurbo ? 2000 : 3800;
             const startTime = performance.now();
             let lastTickAngle = startAngle;
+            let lastFrameTime = startTime, slowFrames = 0, frameCount = 0;
 
             function animateRunner(now) {
+                // Автозащита: если кадры колеса проседают, ставим на паузу анимации каталога
+                const d = now - lastFrameTime;
+                lastFrameTime = now;
+                frameCount++;
+                if (d > 28) slowFrames++;
+                if (frameCount >= 30) {
+                    if (!tilesThrottled && slowFrames / frameCount > 0.3) { tilesThrottled = true; applyPlayState(); }
+                    frameCount = 0; slowFrames = 0;
+                }
+
                 const progress = Math.min((now - startTime) / spinDuration, 1);
 
                 if (progress < 0.25) trailLengthFactor = progress / 0.25;
@@ -886,23 +1018,22 @@
                 } else {
                     trailLengthFactor = 0;
                     isSpinning = false;
-                    onSpinFinished(isVictory);
+                    onSpinFinished(r, prevHash);
                 }
             }
             requestAnimationFrame(animateRunner);
         }
 
-        function sendSpinLog(isVictory) {
-            if (!LOG_ENDPOINT) return; // логи выключены до безопасной настройки
-        }
-
-        function onSpinFinished(isVictory) {
-            if (isVictory) {
+        function onSpinFinished(r, prevHash) {
+            userBalance = r.balance;
+            currentSeedHash = r.nextSeedHash;
+            document.getElementById("roundHashDisplay").innerText = currentSeedHash;
+            showLastRound(r, prevHash);
+            if (r.win) {
                 playVictorySound();
-                userBalance += targetGift.price;
                 showWinModal(targetGift);
             }
-            sendSpinLog(isVictory);
+            tilesThrottled = false;
             syncUI();
             applyPlayState();
         }
@@ -1047,16 +1178,6 @@
 
         function toggleFairnessModal() { document.getElementById("fairnessModal").classList.toggle("hidden"); }
 
-        function generateProvablySeed() {
-            const str = Math.random().toString(36).substring(2) + Date.now().toString(36);
-            document.getElementById("roundHashDisplay").innerText = Array.from(str).map(c => c.charCodeAt(0).toString(16)).join('').padEnd(48, 'f').substring(0, 48);
-        }
-
-        function addBalance(val) {
-            userBalance += val;
-            syncUI();
-        }
-
         function initTelegramUser() {
             if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const u = tg.initDataUnsafe.user;
@@ -1077,6 +1198,7 @@
             initCatalogGridOnce();
             setSelectTarget('target');
             syncUI();
+            initSession();
         };
     </script>
 </body>
